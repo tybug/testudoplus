@@ -32,6 +32,8 @@ This GitHub is hosting a mapping list for some UMD instructors due to
 1. Some instructors' name on RateMyProfessor is different from the one displayed on Testudo Course Schedule.
 2. Some instructors have multiple RateMyProfessor page
 
+**FEEL FREE** to make pull requests to update this list, appreciate your contribution!
+
 ## License
 
 <a href="http://www.wtfpl.net/"><img src="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-4.png" width="80" height="15" alt="WTFPL" /></a>
