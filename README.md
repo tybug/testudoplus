@@ -6,7 +6,7 @@ Integrates RateMyProfessor **DIRECTLY** into Testudo Course Page.
 
 ## Where
 
-This userscript is hosted on [https://greasyfork.org/scripts/381782-terp-course-guide](https://greasyfork.org/scripts/381782-terp-course-guide)
+This userscript is hosted on [https://greasyfork.org/scripts/381782-terp-course-helper](https://greasyfork.org/scripts/381782-terp-course-helper)
 
 ## How to install
 
