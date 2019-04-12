@@ -8,7 +8,7 @@
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.0.2
+// @version     0.0.3
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   dkt.umdrmp.testudo
 // @require     https://unpkg.com/ajax-hook/dist/ajaxhook.min.js
@@ -57,7 +57,7 @@ function updateInstructorRating() {
       ratingElem.href = rating ? `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${DATA[instructorName].recordId}` : '';
       ratingElem.title = instructorName;
       ratingElem.target = '_blank';
-      ratingElem.innerText = rating ? rating.toFixed(1) : 'NG';
+      ratingElem.innerText = rating ? rating.toFixed(1) : 'N/A';
       elem.appendChild(ratingElem);
     }
   });
