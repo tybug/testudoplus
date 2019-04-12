@@ -6,15 +6,15 @@ Integrates RateMyProfessor **DIRECTLY** into Testudo Course Page.
 
 ## Where
 
-This userscript is hosted on [https://greasyfork.org/scripts/381782-terp-course-guide](https://greasyfork.org/scripts/381782-terp-course-guide)
+This userscript is hosted on <a href="https://greasyfork.org/scripts/381782-terp-course-helper" target="_blank">https://greasyfork.org/scripts/381782-terp-course-guide</a>
 
 ## How to install
 
-A more detailed guide can be found [here](https://greasyfork.org/).
+A more detailed guide can be found <a href="https://greasyfork.org/" target="_blank">here</a>
 
-1. Install [TamperMonkey](https://tampermonkey.net/) browser plugin, it is supported on most of the modern browsers.
-2. Visit [GreaseFork/Terp-Course-Helper](https://greasyfork.org/scripts/381782-terp-course-guide)
-3. Press the install button and you will be redirected to `TamperMonkey` installation pop-up
+1. Install <a href="https://tampermonkey.net/" target="_blank">TamperMonkey</a> browser plugin, it is supported on most of the modern browsers.
+2. Visit <a href="https://greasyfork.org/scripts/381782-terp-course-guide" target="_blank">GreaseFork/Terp-Course-Helper</a>
+3. Press the install button and you will be redirected to a installation pop-up
 
 **NOTE**
 
