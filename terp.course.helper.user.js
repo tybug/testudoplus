@@ -8,7 +8,7 @@
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.0.3
+// @version     0.0.4
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   dkt.umdrmp.testudo
 // @require     https://unpkg.com/ajax-hook/dist/ajaxhook.min.js
@@ -42,7 +42,7 @@ function getInstructorName(elem) {
 }
 
 function updateInstructorRating() {
-  unsafeWindow.console.log(DATA);
+  // unsafeWindow.console.log(DATA);
   const instructorElements = unsafeWindow.document.querySelectorAll('.section-instructor');
   Array.prototype.map.call(instructorElements, (elem) => {
     const instructorName = getInstructorName(elem);
@@ -65,7 +65,7 @@ function updateInstructorRating() {
 
 function getRecordId(name) {
   return new Promise((resolve, reject) => {
-    unsafeWindow.console.log(ALIAS, name);
+    // unsafeWindow.console.log(ALIAS, name);
     if (ALIAS[name]) {
       const recordId = ALIAS[name].rmpId;
       if (recordId) {
@@ -142,11 +142,16 @@ function loadRateData() {
 
 function main() {
   loadAliasTable().then(() => {
+    // First load
+    loadRateData();
+    // Add hook to HTTP events
     const hookAjax = unsafeWindow.window.hookAjax;
     hookAjax({
       onreadystatechange: (xhr) => {
-        if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-          setTimeout(loadRateData, 200);
+        if (/https?:\/\/app.testudo.umd.edu\/soc\/[0-9]{6}\/sections\?*/.test(xhr.responseURL)) {
+          if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+            setTimeout(loadRateData, 200);
+          }
         }
       },
     });
