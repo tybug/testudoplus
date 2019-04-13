@@ -8,13 +8,16 @@
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.0.5
+// @version     0.0.6
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   dkt.umdrmp.testudo
 // @require     https://unpkg.com/ajax-hook/dist/ajaxhook.min.js
 // ==/UserScript==
 
-const DATA = {};
+const DATA = {
+  rmp: {},
+  pt: {},
+};
 let ALIAS = {};
 
 function loadAliasTable() {
@@ -42,25 +45,27 @@ function getInstructorName(elem) {
 }
 
 function updateInstructorRating() {
-  // unsafeWindow.console.log(DATA);
+  // unsafeWindow.console.log(DATA.rmp);
   const instructorElements = unsafeWindow.document.querySelectorAll('.section-instructor');
   Array.prototype.map.call(instructorElements, (elem) => {
     const instructorName = getInstructorName(elem);
-    if (DATA[instructorName]) {
+    if (DATA.rmp[instructorName]) {
       const oldElem = elem.querySelector('.rmp-rating-box');
       if (oldElem) {
         oldElem.remove();
       }
-      const rating = DATA[instructorName].rating;
+      const rating = DATA.rmp[instructorName].rating;
       const ratingElem = document.createElement('a');
       ratingElem.className = 'rmp-rating-box';
-      ratingElem.href = rating ? `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${DATA[instructorName].recordId}` : '';
+      ratingElem.href = rating ? `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${DATA.rmp[instructorName].recordId}` : '';
       ratingElem.title = instructorName;
       ratingElem.target = '_blank';
       ratingElem.innerText = rating ? rating.toFixed(1) : 'N/A';
       elem.appendChild(ratingElem);
     }
   });
+
+  updatePTData();
 }
 
 function getRecordId(name) {
@@ -120,14 +125,14 @@ function loadRateData() {
   const instructorElements = unsafeWindow.document.querySelectorAll('.section-instructor');
   Array.prototype.map.call(instructorElements, (elem) => {
     const instructorName = getInstructorName(elem);
-    if (!DATA[instructorName]) {
-      DATA[instructorName] = {
+    if (!DATA.rmp[instructorName]) {
+      DATA.rmp[instructorName] = {
         name: instructorName,
       };
       getRecordId(instructorName).then((recordId) => {
         getRating(recordId).then((rating) => {
-          DATA[instructorName].recordId = recordId;
-          DATA[instructorName].rating = rating;
+          DATA.rmp[instructorName].recordId = recordId;
+          DATA.rmp[instructorName].rating = rating;
 
           updateInstructorRating();
         }).catch(() => {
@@ -140,9 +145,149 @@ function loadRateData() {
   });
 }
 
+function getPTCourseData(courseId) {
+  return new Promise((resolve, reject) => {
+    const url = `https://planetterp.com/course/${courseId}`;
+    GM_xmlhttpRequest({
+      method: 'GET',
+      url,
+      onload: (data) => {
+        if (data.status == 200) {
+          const res = data.responseText;
+          const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
+          const fakeHtml = reader.createElement('html');
+          fakeHtml.innerHTML = res;
+
+          const courseData = {
+            courseId,
+            instructors: {},
+          };
+          
+          const avgGPAElem = fakeHtml.querySelector('#course-grades > p.center-text');
+          if (avgGPAElem) {
+            const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
+            if (matchRes && matchRes[1]) {
+              const avgGPA = Number(matchRes[1]);
+              if (!Number.isNaN(avgGPA)) {
+                courseData.avgGPA = avgGPA;
+              }
+            }
+          }
+
+          const instructorReviewElementList = fakeHtml.querySelectorAll('#course-professors > div');
+          Array.prototype.map.call(instructorReviewElementList, (instructorCardElem) => {
+            const instructorNameElem = instructorCardElem.querySelector('.card-header a');
+            if (instructorNameElem) {
+              const instructorName = instructorNameElem.innerText;
+              const instructorId = instructorNameElem.getAttribute('href').replace(/^\/professor\//, '');
+
+              const reviewElement = instructorCardElem.querySelector('.card-text');
+              if (reviewElement) {
+                const res = reviewElement.innerText.match(/Average rating: ([0-9]\.[0-9]{2})/);
+                if (res && res[1]) {
+                  const rating = Number(res[1]);
+                  if (!Number.isNaN(rating)) {
+                    courseData.instructors[instructorName] = {
+                      name: instructorName,
+                      id: instructorId,
+                      rating,
+                    }
+                  }
+                }
+              }
+            }
+          });
+
+          return resolve(courseData);
+        }
+        reject();
+      }
+    });
+  });
+}
+
+function updatePTData() {
+  const allCourseElem = document.querySelectorAll('#courses-page .course');
+  Array.prototype.map.call(allCourseElem, (courseElem) => {
+    const courseIdElem = courseElem.querySelector('.course-id');
+    const courseId = courseIdElem.innerText;
+    const courseIdContainer = courseIdElem.parentNode;
+
+    const oldElem = courseElem.querySelector('.pt-gpa-box');
+    if (oldElem) {
+      oldElem.remove();
+    }
+
+    if (DATA.pt[courseId]) {
+      const avgGPA = DATA.pt[courseId].avgGPA;
+
+      const avgGPAElem = document.createElement('a');
+      avgGPAElem.className = 'pt-gpa-box';
+      avgGPAElem.href = `https://planetterp.com/course/${courseId}`;
+      avgGPAElem.title = courseId;
+      avgGPAElem.target = '_blank';
+      avgGPAElem.innerText = avgGPA ? `AVG GPA ${avgGPA.toFixed(2)}` : 'N/A';
+      courseIdContainer.appendChild(avgGPAElem);
+    }
+
+    const instructorElemList = courseElem.querySelectorAll('.section-instructor');
+    
+    Array.prototype.map.call(instructorElemList, (elem) => {
+      const instructorName = getInstructorName(elem);
+      if (DATA.pt[courseId] && DATA.pt[courseId].instructors[instructorName]) {
+        const oldElem = elem.querySelector('.pt-rating-box');
+        if (oldElem) {
+          oldElem.remove();
+        }
+
+        const rating = DATA.pt[courseId].instructors[instructorName].rating;
+        const ratingElem = document.createElement('a');
+        ratingElem.className = 'pt-rating-box';
+        ratingElem.href = rating ? `https://planetterp.com/professor/${DATA.pt[courseId].instructors[instructorName].id}` : '';
+        ratingElem.title = instructorName;
+        ratingElem.target = '_blank';
+        ratingElem.innerText = rating ? rating.toFixed(2) : 'N/A';
+        elem.appendChild(ratingElem);
+      }
+    });
+  });
+}
+
+function loadPTData() {
+  const courseIdElements = document.querySelectorAll('.course-id');
+
+  let count = 0;
+
+  function tryUpdateUI() {
+    count += 1;
+
+    if (count >= courseIdElements.length) {
+      updatePTData();
+    }
+  }
+
+  Array.prototype.map.call(courseIdElements, (elem) => {
+    const courseId = elem.innerText;
+    if (!DATA.pt[courseId]) {
+      DATA.pt[courseId] = {
+        courseId,
+      };
+      getPTCourseData(courseId).then((courseData) => {
+        DATA.pt[courseId] = courseData;
+        tryUpdateUI();
+      }).catch(() => {
+        tryUpdateUI();
+      });
+    }
+  });
+}
+
+unsafeWindow.window.x = updatePTData;
+
 function main() {
   loadAliasTable().then(() => {
     // First load
+    loadPTData();
     loadRateData();
     // Add hook to HTTP events
     const hookAjax = unsafeWindow.window.hookAjax;
@@ -164,7 +309,8 @@ ajaxHookLib.src = 'https://unpkg.com/ajax-hook/dist/ajaxhook.min.js';
 document.head.appendChild(ajaxHookLib);
 
 const styleInject = `
-.rmp-rating-box {
+.rmp-rating-box,
+.pt-rating-box {
   border-radius: 5px;
   padding: 1px 5px;
   margin-left: 10px;
@@ -172,6 +318,22 @@ const styleInject = `
   color: #FFFFFF !important;
   font-family: monospace;
   font-weight: bold;
+}
+
+.pt-rating-box {
+  background-color: #009688;
+}
+
+.pt-gpa-box {
+  display: flex;
+  text-align: center;
+  margin-top: 10px;
+  border-radius: 5px;
+  background-color: #009688;
+  color: #FFFFFF !important;
+  font-family: monospace;
+  font-weight: bold;
+  padding: 1px;
 }
 `;
 const styleInjectElem = document.createElement('style');
