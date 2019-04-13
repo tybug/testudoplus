@@ -1,8 +1,8 @@
 # Terp-Course-Helper
 
-Integrates RateMyProfessor **DIRECTLY** into Testudo Course Page.
+Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp](https://planetterp.com/) **DIRECTLY** into Testudo Course Page.
 
-<img width="824" alt="Screen Shot 2019-04-12 at 11 57 54 AM" src="https://user-images.githubusercontent.com/4535844/56050584-46363000-5d1a-11e9-876c-5a8e6b2bdd14.png">
+<img width="990" alt="Screen Shot 2019-04-13 at 4 56 19 PM" src="https://user-images.githubusercontent.com/4535844/56085203-75799980-5e0d-11e9-87d6-481fd61043f4.png">
 
 ## Where
 
@@ -19,11 +19,6 @@ A more detailed guide can be found [here](https://greasyfork.org/).
 **NOTE**
 
 Please allow any outcoming traffic made my this plugin, or this plugin will not work.
-
-## Upcoming Feature
-
-1. Integration with PlanetTerp
-2. Integration with OurUMD
 
 ## Contributing
 
