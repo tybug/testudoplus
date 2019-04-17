@@ -8,7 +8,7 @@
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.0.7
+// @version     0.0.8
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   dkt.umdrmp.testudo
 // @require     https://unpkg.com/ajax-hook/dist/ajaxhook.min.js
@@ -326,6 +326,7 @@ const styleInject = `
 
 .pt-gpa-box {
   display: flex;
+  justify-content: center;
   text-align: center;
   margin-top: 10px;
   border-radius: 5px;
