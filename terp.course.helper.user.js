@@ -8,7 +8,7 @@
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.0.8
+// @version     0.0.9
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   dkt.umdrmp.testudo
 // @require     https://unpkg.com/ajax-hook/dist/ajaxhook.min.js
@@ -110,7 +110,7 @@ function getRating(recordId) {
           const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
           const fakeHtml = reader.createElement('html');
           fakeHtml.innerHTML = res;
-          const ratingRawElem = fakeHtml.querySelector('#mainContent div.grade');
+          const ratingRawElem = fakeHtml.querySelector('[class^="RatingValue__Numerator"]');
           if (ratingRawElem) {
             return resolve(Number(ratingRawElem.innerText));
           }
@@ -162,7 +162,7 @@ function getPTCourseData(courseId) {
             courseId,
             instructors: {},
           };
-          
+
           const avgGPAElem = fakeHtml.querySelector('#course-grades > p.center-text');
           if (avgGPAElem) {
             const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
