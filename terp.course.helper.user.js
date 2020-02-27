@@ -231,7 +231,7 @@ function updatePTData() {
     }
 
     const instructorElemList = courseElem.querySelectorAll('.section-instructor');
-    
+
     Array.prototype.map.call(instructorElemList, (elem) => {
       const instructorName = getInstructorName(elem);
       if (DATA.pt[courseId] && DATA.pt[courseId].instructors[instructorName]) {
@@ -303,6 +303,31 @@ function main() {
   });
 }
 
+function sortAllByGPA() {
+    const coursesContainer = document.querySelector('#courses-page');
+    const allCourses = [...document.querySelectorAll('div.course')];
+
+    allCourses.sort((courseElem, otherCourseElem) => {
+        if (!DATA.pt[courseElem.id] || !DATA.pt[courseElem.id].avgGPA) {
+            return 100;
+        }
+        if (!DATA.pt[otherCourseElem.id] || !DATA.pt[otherCourseElem.id].avgGPA) {
+            return -100;
+        }
+        return DATA.pt[otherCourseElem.id].avgGPA - DATA.pt[courseElem.id].avgGPA;
+    });
+
+    allCourses.forEach((courseElem) => {
+        coursesContainer.append(courseElem);
+    });
+
+    const headerList = document.querySelectorAll('.course-prefix-container');
+
+    if (headerList.length > 1) {
+        headerList.forEach(e => e.remove());
+    }
+}
+
 const ajaxHookLib = document.createElement('script');
 ajaxHookLib.addEventListener('load', main);
 ajaxHookLib.src = 'https://unpkg.com/ajax-hook/dist/ajaxhook.min.js';
@@ -317,7 +342,6 @@ const styleInject = `
   background-color: #FF0266;
   color: #FFFFFF !important;
   font-family: monospace;
-  font-weight: bold;
 }
 
 .pt-rating-box {
@@ -333,7 +357,6 @@ const styleInject = `
   background-color: #009688;
   color: #FFFFFF !important;
   font-family: monospace;
-  font-weight: bold;
   padding: 1px;
 }
 `;
@@ -341,3 +364,9 @@ const styleInjectElem = document.createElement('style');
 styleInjectElem.id = 'umd-rmp-style-inject';
 styleInjectElem.innerHTML = styleInject;
 document.head.appendChild(styleInjectElem);
+
+// add sorting button
+const sortBtn = document.createElement('button');
+sortBtn.addEventListener('click', sortAllByGPA);
+sortBtn.textContent = 'Sort By AVG GPA DESC';
+document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.querySelector('#courses-page'));
