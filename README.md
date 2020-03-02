@@ -1,8 +1,10 @@
 # Terp-Course-Helper
 
-Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp](https://planetterp.com/) **DIRECTLY** into Testudo Course Page.
+Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp](https://planetterp.com/) **DIRECTLY** into Testudo Course Page. Also allow students to sort courses by their average GPA.
 
 <img width="990" alt="Screen Shot 2019-04-13 at 4 56 19 PM" src="https://user-images.githubusercontent.com/4535844/56085203-75799980-5e0d-11e9-87d6-481fd61043f4.png">
+
+<img width="1126" alt="Screen Shot 2020-03-02 at 3 51 23 AM" src="https://user-images.githubusercontent.com/4535844/75660184-578d7100-5c39-11ea-9cf5-322a3dd8cd9a.png">
 
 ## Where
 
