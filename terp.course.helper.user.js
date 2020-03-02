@@ -4,11 +4,11 @@
 // @license     WTFPL
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    04/12/2019
+// @modified    03/02/2020
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.0.10
+// @version     0.0.11
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   dkt.umdrmp.testudo
 // @require     https://unpkg.com/ajax-hook/dist/ajaxhook.min.js
@@ -19,6 +19,13 @@ const DATA = {
   pt: {},
 };
 let ALIAS = {};
+
+// add sorting button
+const sortBtn = document.createElement('button');
+sortBtn.addEventListener('click', sortAllByGPA);
+sortBtn.disabled = true;
+sortBtn.textContent = 'Sort By AVG GPA DESC (Loading data, please wait)';
+document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.querySelector('#courses-page'));
 
 function loadAliasTable() {
   return new Promise((resolve) => {
@@ -234,7 +241,7 @@ function updatePTData() {
 
     Array.prototype.map.call(instructorElemList, (elem) => {
       const instructorName = getInstructorName(elem);
-      if (DATA.pt[courseId] && DATA.pt[courseId].instructors[instructorName]) {
+      if (DATA.pt && DATA.pt[courseId] && DATA.pt[courseId].instructors && DATA.pt[courseId].instructors[instructorName]) {
         const oldElem = elem.querySelector('.pt-rating-box');
         if (oldElem) {
           oldElem.remove();
@@ -261,8 +268,16 @@ function loadPTData() {
   function tryUpdateUI() {
     count += 1;
 
+    sortBtn.textContent = `Sort By AVG GPA DESC (Loading ${count}/${courseIdElements.length})`;
+
     if (count >= courseIdElements.length) {
       updatePTData();
+    }
+
+    if (count === courseIdElements.length) {
+      console.log('LOAD DONE');
+      sortBtn.textContent = 'Sort By AVG GPA DESC';
+      sortBtn.disabled = false;
     }
   }
 
@@ -294,7 +309,7 @@ function main() {
     hookAjax({
       onreadystatechange: (xhr) => {
         if (/https?:\/\/app.testudo.umd.edu\/soc\/[0-9]{6}\/sections\?*/.test(xhr.responseURL)) {
-          if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+          if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
             setTimeout(loadRateData, 200);
           }
         }
@@ -304,28 +319,28 @@ function main() {
 }
 
 function sortAllByGPA() {
-    const coursesContainer = document.querySelector('#courses-page');
-    const allCourses = [...document.querySelectorAll('div.course')];
+  const coursesContainer = document.querySelector('#courses-page');
+  const allCourses = [...document.querySelectorAll('div.course')];
 
-    allCourses.sort((courseElem, otherCourseElem) => {
-        if (!DATA.pt[courseElem.id] || !DATA.pt[courseElem.id].avgGPA) {
-            return 100;
-        }
-        if (!DATA.pt[otherCourseElem.id] || !DATA.pt[otherCourseElem.id].avgGPA) {
-            return -100;
-        }
-        return DATA.pt[otherCourseElem.id].avgGPA - DATA.pt[courseElem.id].avgGPA;
-    });
-
-    allCourses.forEach((courseElem) => {
-        coursesContainer.append(courseElem);
-    });
-
-    const headerList = document.querySelectorAll('.course-prefix-container');
-
-    if (headerList.length > 1) {
-        headerList.forEach(e => e.remove());
+  allCourses.sort((courseElem, otherCourseElem) => {
+    if (!DATA.pt[courseElem.id] || !DATA.pt[courseElem.id].avgGPA) {
+      return 100;
     }
+    if (!DATA.pt[otherCourseElem.id] || !DATA.pt[otherCourseElem.id].avgGPA) {
+      return -100;
+    }
+    return DATA.pt[otherCourseElem.id].avgGPA - DATA.pt[courseElem.id].avgGPA;
+  });
+
+  allCourses.forEach((courseElem) => {
+    coursesContainer.append(courseElem);
+  });
+
+  const headerList = document.querySelectorAll('.course-prefix-container');
+
+  if (headerList.length > 1) {
+    headerList.forEach(e => e.remove());
+  }
 }
 
 const ajaxHookLib = document.createElement('script');
@@ -364,9 +379,3 @@ const styleInjectElem = document.createElement('style');
 styleInjectElem.id = 'umd-rmp-style-inject';
 styleInjectElem.innerHTML = styleInject;
 document.head.appendChild(styleInjectElem);
-
-// add sorting button
-const sortBtn = document.createElement('button');
-sortBtn.addEventListener('click', sortAllByGPA);
-sortBtn.textContent = 'Sort By AVG GPA DESC';
-document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.querySelector('#courses-page'));
