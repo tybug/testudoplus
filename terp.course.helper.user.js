@@ -170,7 +170,7 @@ function getPTCourseData(courseId) {
             instructors: {},
           };
 
-          const avgGPAElem = fakeHtml.querySelector('#course-grades > p.center-text');
+          const avgGPAElem = fakeHtml.querySelector('#course-grades > p.text-center');
           if (avgGPAElem) {
             const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
             if (matchRes && matchRes[1]) {
