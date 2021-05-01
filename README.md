@@ -6,33 +6,20 @@ Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp
 
 <img width="1126" alt="Screen Shot 2020-03-02 at 3 51 23 AM" src="https://user-images.githubusercontent.com/4535844/75660184-578d7100-5c39-11ea-9cf5-322a3dd8cd9a.png">
 
-## Where
-
-This userscript is hosted on [https://greasyfork.org/scripts/381782-terp-course-helper](https://greasyfork.org/scripts/381782-terp-course-helper)
-
 ## How to install
 
-A more detailed guide can be found [here](https://greasyfork.org/).
-
-1. Install [TamperMonkey](https://tampermonkey.net/) browser plugin, it is supported on most of the modern browsers.
-2. Visit [GreaseFork/Terp-Course-Helper](https://greasyfork.org/scripts/381782-terp-course-guide)
-3. Press the install button and you will be redirected to `TamperMonkey` installation pop-up
+1. Install [TamperMonkey](https://tampermonkey.net/) (for chrome) or [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) (for Firefox)
+2. [Click here](https://github.com/tybug/Terp-Course-Helper/raw/master/terp.course.helper.user.js) to install
 
 **NOTE**
 
-Please allow any outcoming traffic made my this plugin, or this plugin will not work.
+Please allow any outcoming traffic made by this plugin, or this plugin will not work.
 
 ## Contributing
 
-This GitHub is hosting a mapping list for some UMD instructors due to
+This GitHub hosts a mapping list for some UMD instructors due to:
 
 1. Some instructors' name on RateMyProfessor is different from the one displayed on Testudo Course Schedule.
 2. Some instructors have multiple RateMyProfessor page
 
-**FEEL FREE** to make pull requests to update this list, appreciate your contribution!
-
-## License
-
-<a href="http://www.wtfpl.net/"><img src="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-4.png" width="80" height="15" alt="WTFPL" /></a>
-       
-[WTFPL](http://www.wtfpl.net/)
+**FEEL FREE** to make pull requests to update this list, I appreciate your contribution!
