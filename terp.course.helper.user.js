@@ -4,7 +4,7 @@
 // @license     WTFPL
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    03/02/2020
+// @modified    05/01/2021
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
