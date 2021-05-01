@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Terp Course Helper
-// @author      DickyT
+// @author      DickyT / tybug
 // @license     WTFPL
 // @encoding    utf-8
 // @date        04/12/2019
