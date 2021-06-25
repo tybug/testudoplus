@@ -1,4 +1,4 @@
-## Terp-Course-Helper
+# Terp-Course-Helper
 
 Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp](https://planetterp.com/) directly into the course listing. Also lets you sort courses by their average GPA.
 
