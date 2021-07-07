@@ -20,6 +20,12 @@ const DATA = {
 };
 let ALIAS = {};
 
+// add reset button
+const resetBtn = document.createElement('button');
+resetBtn.addEventListener('click', resetSort);
+resetBtn.textContent = 'Sort By DEFAULT';
+document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document.querySelector('#courses-page'));
+
 // add sorting button
 const sortBtn = document.createElement('button');
 sortBtn.addEventListener('click', sortAllByGPA);
@@ -330,6 +336,25 @@ function sortAllByGPA() {
       return -100;
     }
     return DATA.pt[otherCourseElem.id].avgGPA - DATA.pt[courseElem.id].avgGPA;
+  });
+
+  allCourses.forEach((courseElem) => {
+    coursesContainer.append(courseElem);
+  });
+
+  const headerList = document.querySelectorAll('.course-prefix-container');
+
+  if (headerList.length > 1) {
+    headerList.forEach(e => e.remove());
+  }
+}
+
+function resetSort() {
+  const coursesContainer = document.querySelector('.courses-container');
+  const allCourses = [...document.querySelectorAll('div.course')];
+
+  allCourses.sort((courseElem, otherCourseElem) => {
+    return courseElem.id.toLowerCase().localeCompare(otherCourseElem.id.toLowerCase());
   });
 
   allCourses.forEach((courseElem) => {
