@@ -30,7 +30,7 @@ document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document
 const sortBtn = document.createElement('button');
 sortBtn.addEventListener('click', sortAllByGPA);
 sortBtn.disabled = true;
-sortBtn.textContent = 'Sort By AVG GPA DESC (Loading data, please wait)';
+sortBtn.textContent = 'Sort By Average GPA Descending (Loading data, please wait)';
 document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.querySelector('#courses-page'));
 
 function loadAliasTable() {
@@ -274,7 +274,7 @@ function loadPTData() {
   function tryUpdateUI() {
     count += 1;
 
-    sortBtn.textContent = `Sort By AVG GPA DESC (Loading ${count}/${courseIdElements.length})`;
+    sortBtn.textContent = `Sort By Average GPA Descending (Loading ${count}/${courseIdElements.length})`;
 
     if (count >= courseIdElements.length) {
       updatePTData();
@@ -282,7 +282,7 @@ function loadPTData() {
 
     if (count === courseIdElements.length) {
       console.log('LOAD DONE');
-      sortBtn.textContent = 'Sort By AVG GPA DESC';
+      sortBtn.textContent = 'Sort By Average GPA Descending';
       sortBtn.disabled = false;
     }
   }
