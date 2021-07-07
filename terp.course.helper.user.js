@@ -354,8 +354,8 @@ function resetSort() {
   const coursesContainer = document.querySelector('.courses-container');
   const allCourses = [...document.querySelectorAll('div.course')];
 
-  allCourses.sort((courseElem, otherCourseElem) => {
-    return courseElem.id.toLowerCase().localeCompare(otherCourseElem.id.toLowerCase());
+  allCourses.sort((course1, course2) => {
+    return course1.id.toLowerCase().localeCompare(course2.id.toLowerCase());
   });
 
   allCourses.forEach((courseElem) => {
