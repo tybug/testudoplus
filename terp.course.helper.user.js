@@ -20,18 +20,19 @@ const DATA = {
 };
 let ALIAS = {};
 
-// add reset button
-const resetBtn = document.createElement('button');
-resetBtn.addEventListener('click', resetSort);
-resetBtn.textContent = 'Sort By DEFAULT';
-document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document.querySelector('#courses-page'));
-
 // add sorting button
 const sortBtn = document.createElement('button');
 sortBtn.addEventListener('click', sortAllByGPA);
 sortBtn.disabled = true;
 sortBtn.textContent = 'Sort By Average GPA Descending (Loading data, please wait)';
 document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.querySelector('#courses-page'));
+
+// add reset button
+const resetBtn = document.createElement('button');
+resetBtn.style.cssText = "margin-left: 20px;"
+resetBtn.addEventListener('click', resetSort);
+resetBtn.textContent = 'Reset Sort';
+document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document.querySelector('#courses-page'));
 
 function loadAliasTable() {
   return new Promise((resolve) => {
