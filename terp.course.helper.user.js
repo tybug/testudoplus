@@ -36,7 +36,7 @@ document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document
 
 function loadAliasTable() {
   return new Promise((resolve) => {
-    const url = 'https://raw.githubusercontent.com/DickyT/Terp-Course-Helper/master/alias.json';
+    const url = 'https://raw.githubusercontent.com/tybug/Terp-Course-Helper/master/alias.json';
     GM_xmlhttpRequest({
       method: 'GET',
       url,
