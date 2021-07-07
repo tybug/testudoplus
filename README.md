@@ -9,7 +9,7 @@ Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp
 ## Installation
 
 1. Install [TamperMonkey](https://tampermonkey.net/)
-2. [Click here](https://github.com/tybug/Terp-Course-Helper/raw/master/terp.course.helper.user.js) to install
+2. Then [click here](https://github.com/tybug/Terp-Course-Helper/raw/master/terp.course.helper.user.js) to install
 
 Make sure to allow any outgoing traffic made by this plugin.
 
