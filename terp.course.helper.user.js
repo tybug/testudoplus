@@ -24,8 +24,15 @@ let ALIAS = {};
 const sortBtn = document.createElement('button');
 sortBtn.addEventListener('click', sortAllByGPA);
 sortBtn.disabled = true;
-sortBtn.textContent = 'Sort By AVG GPA DESC (Loading data, please wait)';
+sortBtn.textContent = 'Sort By Average GPA Descending (Loading data, please wait)';
 document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.querySelector('#courses-page'));
+
+// add reset button
+const resetBtn = document.createElement('button');
+resetBtn.style.cssText = "margin-left: 20px;"
+resetBtn.addEventListener('click', resetSort);
+resetBtn.textContent = 'Reset Sort';
+document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document.querySelector('#courses-page'));
 
 function loadAliasTable() {
   return new Promise((resolve) => {
@@ -268,7 +275,7 @@ function loadPTData() {
   function tryUpdateUI() {
     count += 1;
 
-    sortBtn.textContent = `Sort By AVG GPA DESC (Loading ${count}/${courseIdElements.length})`;
+    sortBtn.textContent = `Sort By Average GPA Descending (Loading ${count}/${courseIdElements.length})`;
 
     if (count >= courseIdElements.length) {
       updatePTData();
@@ -276,7 +283,7 @@ function loadPTData() {
 
     if (count === courseIdElements.length) {
       console.log('LOAD DONE');
-      sortBtn.textContent = 'Sort By AVG GPA DESC';
+      sortBtn.textContent = 'Sort By Average GPA Descending';
       sortBtn.disabled = false;
     }
   }
@@ -343,6 +350,25 @@ function sortAllByGPA() {
   }
 }
 
+function resetSort() {
+  const coursesContainer = document.querySelector('.courses-container');
+  const allCourses = [...document.querySelectorAll('div.course')];
+
+  allCourses.sort((course1, course2) => {
+    return course1.id.toLowerCase().localeCompare(course2.id.toLowerCase());
+  });
+
+  allCourses.forEach((courseElem) => {
+    coursesContainer.append(courseElem);
+  });
+
+  const headerList = document.querySelectorAll('.course-prefix-container');
+
+  if (headerList.length > 1) {
+    headerList.forEach(e => e.remove());
+  }
+}
+
 const ajaxHookLib = document.createElement('script');
 ajaxHookLib.addEventListener('load', main);
 ajaxHookLib.src = 'https://unpkg.com/ajax-hook/dist/ajaxhook.min.js';
@@ -358,11 +384,9 @@ const styleInject = `
   color: #FFFFFF !important;
   font-family: monospace;
 }
-
 .pt-rating-box {
   background-color: #009688;
 }
-
 .pt-gpa-box {
   display: flex;
   justify-content: center;
@@ -380,9 +404,9 @@ styleInjectElem.id = 'umd-rmp-style-inject';
 styleInjectElem.innerHTML = styleInject;
 document.head.appendChild(styleInjectElem);
 
-// Get rid of the crazy amount of unused parameters in SOC urls. I couldn't find a way to get rid of courseStartCompare, 
+// Get rid of the crazy amount of unused parameters in SOC urls. I couldn't find a way to get rid of courseStartCompare,
 // courseStartMin, and courseStartAM, even though they're all empty values.
-// This will throw away any filters except courseId and termId, but almost nobody filters by anything else anyway. Can support more parameters 
+// This will throw away any filters except courseId and termId, but almost nobody filters by anything else anyway. Can support more parameters
 // if neceesary (likely by checking if the parameter value is equal to its default, discarding it if so, and keeping it otherwise).
 const url = window.location.href;
 var courseId = url.split("courseId=")[1].split("&")[0];
