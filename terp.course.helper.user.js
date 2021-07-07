@@ -319,7 +319,7 @@ function main() {
 }
 
 function sortAllByGPA() {
-  const coursesContainer = document.querySelector('#courses-page');
+  const coursesContainer = document.querySelector('.courses-container');
   const allCourses = [...document.querySelectorAll('div.course')];
 
   allCourses.sort((courseElem, otherCourseElem) => {
