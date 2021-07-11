@@ -335,6 +335,7 @@ function createShareLinks() {
     const shareLink = document.createElement('text');
     shareLink.className = 'share-course-link';
     shareLink.innerText = "Share";
+    shareLink.setAttribute("data-tooltip", "copy to clipboard");
     shareDiv.appendChild(shareLink);
     shareDiv.addEventListener('click', function(e) {
       copyLink(elem.id);
@@ -447,6 +448,37 @@ const styleInject = `
   background-color: #8E1515;
   color: #FFFFFF !important;
   font-family: monospace;
+  cursor: pointer;
+}
+
+/* fancy tooltip stolen from https://stackoverflow.com/a/25813336, god bless him */
+[data-tooltip]:before {
+  /* needed - do not touch */
+  content: attr(data-tooltip);
+  position: absolute;
+  opacity: 0;
+
+  /* customizable */
+  transition: all 0.15s ease;
+  padding: 3px;
+  color: white;
+  border-radius: 5px;
+  width: 150px;
+  z-index: 10;
+}
+
+[data-tooltip]:hover:before {
+  /* needed - do not touch */
+  opacity: 1;
+
+  /* customizable */
+  background: black;
+  margin-top: -30px;
+  margin-left: -10px;
+}
+
+[data-tooltip]:not([data-tooltip-persistent]):before {
+  pointer-events: none;
 }
 `;
 const styleInjectElem = document.createElement('style');
