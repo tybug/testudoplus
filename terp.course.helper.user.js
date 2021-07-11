@@ -241,7 +241,13 @@ function updatePTData() {
       avgGPAElem.title = courseId;
       avgGPAElem.target = '_blank';
       avgGPAElem.innerText = avgGPA ? `AVG GPA ${avgGPA.toFixed(2)}` : 'N/A';
-      courseIdContainer.appendChild(avgGPAElem);
+
+      const shareCourseElem = courseIdContainer.querySelector('.share-course-div');
+      if (shareCourseElem) {
+        shareCourseElem.before(avgGPAElem);
+      } else {
+        courseIdContainer.appendChild(avgGPAElem);
+      }
     }
 
     const instructorElemList = courseElem.querySelectorAll('.section-instructor');
@@ -304,6 +310,40 @@ function loadPTData() {
   });
 }
 
+function createShareLinks() {
+  const courseElements = unsafeWindow.document.querySelectorAll('.course');
+  const baseURL = "https://app.testudo.umd.edu/soc";
+  const copyLink = courseId => {
+    const copyfield = document.createElement('textarea');
+    const currentURL = window.location.href;
+    var termId;
+    if (currentURL.includes("termId=")) {
+      termId = currentURL.split("termId=")[1].split("&")[0];
+    } else {
+      termId = currentURL.split("/soc/")[1].split("/")[0];
+    }
+    let toCopy = baseURL + "/" + termId + "/" + courseId.substring(0, 4) + "/" + courseId;
+    copyfield.value = toCopy;
+    document.body.appendChild(copyfield);
+    copyfield.select();
+    document.execCommand('copy');
+    document.body.removeChild(copyfield);
+  };
+  Array.prototype.map.call(courseElements, (elem) => {
+    const shareDiv = document.createElement('div');
+    shareDiv.className = 'share-course-div';
+    const shareLink = document.createElement('text');
+    shareLink.className = 'share-course-link';
+    shareLink.innerText = "Share";
+    shareLink.setAttribute("data-tooltip", "copy to clipboard");
+    shareDiv.appendChild(shareLink);
+    shareDiv.addEventListener('click', function(e) {
+      copyLink(elem.id);
+    });
+    elem.querySelector('.course-id-container').appendChild(shareDiv);
+  });
+}
+
 // unsafeWindow.window.x = updatePTData;
 
 function main() {
@@ -311,6 +351,7 @@ function main() {
     // First load
     loadPTData();
     loadRateData();
+    createShareLinks();
     // Add hook to HTTP events
     const hookAjax = unsafeWindow.window.hookAjax;
     hookAjax({
@@ -397,6 +438,47 @@ const styleInject = `
   color: #FFFFFF !important;
   font-family: monospace;
   padding: 1px;
+}
+.share-course-div {
+  display: flex;
+  justify-content: center;
+  border-radius: 5px;
+  padding: 1px;
+  margin-top: 10px;
+  background-color: #8E1515;
+  color: #FFFFFF !important;
+  font-family: monospace;
+  cursor: pointer;
+}
+
+/* fancy tooltip stolen from https://stackoverflow.com/a/25813336, god bless him */
+[data-tooltip]:before {
+  /* needed - do not touch */
+  content: attr(data-tooltip);
+  position: absolute;
+  opacity: 0;
+
+  /* customizable */
+  transition: all 0.15s ease;
+  padding: 3px;
+  color: white;
+  border-radius: 5px;
+  width: 150px;
+  z-index: 10;
+}
+
+[data-tooltip]:hover:before {
+  /* needed - do not touch */
+  opacity: 1;
+
+  /* customizable */
+  background: black;
+  margin-top: -30px;
+  margin-left: -10px;
+}
+
+[data-tooltip]:not([data-tooltip-persistent]):before {
+  pointer-events: none;
 }
 `;
 const styleInjectElem = document.createElement('style');
