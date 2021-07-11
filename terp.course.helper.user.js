@@ -241,7 +241,13 @@ function updatePTData() {
       avgGPAElem.title = courseId;
       avgGPAElem.target = '_blank';
       avgGPAElem.innerText = avgGPA ? `AVG GPA ${avgGPA.toFixed(2)}` : 'N/A';
-      courseIdContainer.appendChild(avgGPAElem);
+
+      const shareCourseElem = courseIdContainer.querySelector('.share-course-div');
+      if (shareCourseElem) {
+        shareCourseElem.before(avgGPAElem);
+      } else {
+        courseIdContainer.appendChild(avgGPAElem);
+      }
     }
 
     const instructorElemList = courseElem.querySelectorAll('.section-instructor');
@@ -433,8 +439,14 @@ const styleInject = `
   padding: 1px;
 }
 .share-course-div {
-}
-.share-course-link {
+  display: flex;
+  justify-content: center;
+  border-radius: 5px;
+  padding: 1px;
+  margin-top: 10px;
+  background-color: #8E1515;
+  color: #FFFFFF !important;
+  font-family: monospace;
 }
 `;
 const styleInjectElem = document.createElement('style');
