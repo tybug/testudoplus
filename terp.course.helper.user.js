@@ -312,18 +312,9 @@ function loadPTData() {
 
 function createShareLinks() {
   const courseElements = unsafeWindow.document.querySelectorAll('.course');
-  const baseURL = "https://app.testudo.umd.edu/soc";
   const copyLink = courseId => {
     const copyfield = document.createElement('textarea');
-    const currentURL = window.location.href;
-    var termId;
-    if (currentURL.includes("termId=")) {
-      termId = currentURL.split("termId=")[1].split("&")[0];
-    } else {
-      termId = currentURL.split("/soc/")[1].split("/")[0];
-    }
-    let toCopy = baseURL + "/" + termId + "/" + courseId.substring(0, 4) + "/" + courseId;
-    copyfield.value = toCopy;
+    copyfield.value = genShareLink(courseId);
     document.body.appendChild(copyfield);
     copyfield.select();
     document.execCommand('copy');
@@ -332,16 +323,29 @@ function createShareLinks() {
   Array.prototype.map.call(courseElements, (elem) => {
     const shareDiv = document.createElement('div');
     shareDiv.className = 'share-course-div';
-    const shareLink = document.createElement('text');
+    const shareLink = document.createElement('a');
     shareLink.className = 'share-course-link';
     shareLink.innerText = "Share";
-    shareLink.setAttribute("data-tooltip", "copy to clipboard");
+    shareLink.title = "Copy Course Link\n" + genShareLink(elem.id);
     shareDiv.appendChild(shareLink);
     shareDiv.addEventListener('click', function(e) {
       copyLink(elem.id);
     });
     elem.querySelector('.course-id-container').appendChild(shareDiv);
   });
+}
+
+function genShareLink(courseId) {
+  const baseURL = "https://app.testudo.umd.edu/soc";
+  const currentURL = window.location.href;
+  var termId;
+  if (currentURL.includes("termId=")) {
+    termId = currentURL.split("termId=")[1].split("&")[0];
+  } else {
+    termId = currentURL.split("/soc/")[1].split("/")[0];
+  }
+  let toCopy = baseURL + "/" + termId + "/" + courseId.substring(0, 4) + "/" + courseId;
+  return toCopy;
 }
 
 // unsafeWindow.window.x = updatePTData;
