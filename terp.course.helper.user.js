@@ -454,6 +454,14 @@ const styleInject = `
   font-family: monospace;
   cursor: pointer;
 }
+.share-course-div:active {
+  transform: scale(0.93);
+
+}
+.share-course-link:hover,
+.share-course-link:active {
+  text-decoration: none;
+}
 
 /* fancy tooltip stolen from https://stackoverflow.com/a/25813336, god bless him */
 [data-tooltip]:before {
