@@ -11,7 +11,6 @@
 // @version     0.1.1
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   dkt.umdrmp.testudo
-// @require     https://unpkg.com/ajax-hook/dist/ajaxhook.min.js
 // ==/UserScript==
 
 const DATA = {
@@ -351,18 +350,6 @@ function main() {
     // First load
     loadPTData();
     loadRateData();
-    createShareLinks();
-    // Add hook to HTTP events
-    const hookAjax = unsafeWindow.window.hookAjax;
-    hookAjax({
-      onreadystatechange: (xhr) => {
-        if (/https?:\/\/app.testudo.umd.edu\/soc\/[0-9]{6}\/sections\?*/.test(xhr.responseURL)) {
-          if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-            setTimeout(loadRateData, 200);
-          }
-        }
-      },
-    });
   });
 }
 
@@ -409,11 +396,6 @@ function resetSort() {
     headerList.forEach(e => e.remove());
   }
 }
-
-const ajaxHookLib = document.createElement('script');
-ajaxHookLib.addEventListener('load', main);
-ajaxHookLib.src = 'https://unpkg.com/ajax-hook/dist/ajaxhook.min.js';
-document.head.appendChild(ajaxHookLib);
 
 const styleInject = `
 .rmp-rating-box,
@@ -497,3 +479,5 @@ var termId = url.split("termId=")[1].split("&")[0];
 const newUrl = `https://app.testudo.umd.edu/soc/search?courseId=${courseId}&termId=${termId}&courseStartCompare=&courseStartMin=&courseStartAM=`;
 
 window.history.pushState("", "", newUrl);
+
+main();
