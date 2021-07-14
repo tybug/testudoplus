@@ -158,23 +158,19 @@ function loadRateData() {
   });
 }
 
-async function ptAPIGet(endpoint, query, headers) {
-  headers.Accept = "application/json";
-  var queryString = "";
-  for (var key in query) {
-    if (!query.hasOwnProperty(key)) continue;
-    queryString += key + "=" + query[key] + "&"
-  }
-  queryString = queryString.slice(0, -1);
-  const response = await fetch("https://api.planetterp.com/v1/" + endpoint + "?" + queryString, {
+async function planetterpAPI(endpoint, parameters) {
+  const params = new URLSearchParams(parameters).toString()
+  const response = await fetch(`https://api.planetterp.com/v1/${endpoint}?${params}`, {
     method: "GET",
-    headers: headers
+    headers: {
+      Accept: "application/json"
+    }
   });
   return response
 }
 
 async function getPTCourseData(courseId) {
-  const courseSchema = await ptAPIGet("course", {name:courseId}, {});
+  const courseSchema = await planetterpAPI("course", {name: courseId});
   const courseData = {
       courseId,
       instructors: {}
