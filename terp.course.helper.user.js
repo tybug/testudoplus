@@ -58,7 +58,6 @@ function getInstructorName(elem) {
 }
 
 function updateInstructorRating() {
-  // unsafeWindow.console.log(DATA.rmp);
   const instructorElements = unsafeWindow.document.querySelectorAll('.section-instructor');
   Array.prototype.map.call(instructorElements, (elem) => {
     const instructorName = getInstructorName(elem);
@@ -83,7 +82,6 @@ function updateInstructorRating() {
 
 function getRecordId(name) {
   return new Promise((resolve, reject) => {
-    // unsafeWindow.console.log(ALIAS, name);
     if (ALIAS[name]) {
       const recordId = ALIAS[name].rmpId;
       if (recordId) {
@@ -101,7 +99,6 @@ function getRecordId(name) {
           const suggestionList = res.response.docs;
           const [instructorInfo] = suggestionList.filter(d => d.schoolid_s === '1270');
           if (instructorInfo) {
-            // unsafeWindow.console.log(instructorInfo);
             return resolve(instructorInfo.pk_id);
           }
         }
@@ -158,65 +155,70 @@ function loadRateData() {
   });
 }
 
-function getPTCourseData(courseId) {
-  return new Promise((resolve, reject) => {
-    const url = `https://planetterp.com/course/${courseId}`;
-    GM_xmlhttpRequest({
-      method: 'GET',
-      url,
-      onload: (data) => {
-        if (data.status == 200) {
-          const res = data.responseText;
-          const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
-          const fakeHtml = reader.createElement('html');
-          fakeHtml.innerHTML = res;
+async function planetterpAPI(endpoint, parameters) {
+  const params = new URLSearchParams(parameters).toString()
+  const response = await fetch(`https://api.planetterp.com/v1/${endpoint}?${params}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json"
+    }
+  });
+  if (response.status != 200) throw new Error("ERROR: " + endpoint + " request failed. Parameters: " + JSON.stringify(parameters));
+  return response.json();
+}
 
-          const courseData = {
-            courseId,
-            instructors: {},
-          };
+async function getPTCourseData(courseId) {
+  var courseSchema;
+  try {
+    courseSchema = await planetterpAPI("course", {name: courseId});
+  } catch (error) {
+    console.error(error);
+    courseSchema = {"professors":[]};
+  }
+  const courseData = {
+      courseId,
+      instructors: {}
+  };
+  const url = `https://planetterp.com/course/${courseId}`;
+  GM_xmlhttpRequest({
+    method: 'GET',
+    url,
+    onload: (data) => {
+      if (data.status == 200) {
+        const res = data.responseText;
+        const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
+        const fakeHtml = reader.createElement('html');
+        fakeHtml.innerHTML = res;
 
-          const avgGPAElem = fakeHtml.querySelector('#course-grades > p.text-center');
-          if (avgGPAElem) {
-            const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
-            if (matchRes && matchRes[1]) {
-              const avgGPA = Number(matchRes[1]);
-              if (!Number.isNaN(avgGPA)) {
-                courseData.avgGPA = avgGPA;
-              }
+        const avgGPAElem = fakeHtml.querySelector('#course-grades > p.text-center');
+        if (avgGPAElem) {
+          const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
+          if (matchRes && matchRes[1]) {
+            const avgGPA = Number(matchRes[1]);
+            if (!Number.isNaN(avgGPA)) {
+              courseData.avgGPA = avgGPA;
             }
           }
-
-          const instructorReviewElementList = fakeHtml.querySelectorAll('#course-professors > div');
-          Array.prototype.map.call(instructorReviewElementList, (instructorCardElem) => {
-            const instructorNameElem = instructorCardElem.querySelector('.card-header a');
-            if (instructorNameElem) {
-              const instructorName = instructorNameElem.innerText;
-              const instructorId = instructorNameElem.getAttribute('href').replace(/^\/professor\//, '');
-
-              const reviewElement = instructorCardElem.querySelector('.card-text');
-              if (reviewElement) {
-                const res = reviewElement.innerText.match(/Average rating: ([0-9]\.[0-9]{2})/);
-                if (res && res[1]) {
-                  const rating = Number(res[1]);
-                  if (!Number.isNaN(rating)) {
-                    courseData.instructors[instructorName] = {
-                      name: instructorName,
-                      id: instructorId,
-                      rating,
-                    }
-                  }
-                }
-              }
-            }
-          });
-
-          return resolve(courseData);
         }
-        reject();
       }
-    });
+    }
   });
+
+  await Promise.all(courseSchema.professors.map(async (professor) => {
+    var profSchema
+    try {
+      profSchema = await planetterpAPI("professor", {name: professor}, {});
+    } catch (error) {
+      console.error(error);
+      profSchema = {professor, "slug": "error", "average_rating": null};
+    }
+    courseData.instructors[professor] = {
+      name: professor,
+      id: profSchema.slug,
+      rating: profSchema.average_rating
+    }
+  }));
+  return courseData;
 }
 
 function updatePTData() {
@@ -253,7 +255,7 @@ function updatePTData() {
 
     Array.prototype.map.call(instructorElemList, (elem) => {
       const instructorName = getInstructorName(elem);
-      if (DATA.pt && DATA.pt[courseId] && DATA.pt[courseId].instructors && DATA.pt[courseId].instructors[instructorName]) {
+      if (DATA?.pt?.[courseId]?.instructors?.[instructorName]) {
         const oldElem = elem.querySelector('.pt-rating-box');
         if (oldElem) {
           oldElem.remove();
@@ -272,7 +274,7 @@ function updatePTData() {
   });
 }
 
-function loadPTData() {
+async function loadPTData() {
   const courseIdElements = document.querySelectorAll('.course-id');
 
   let count = 0;
@@ -293,20 +295,17 @@ function loadPTData() {
     }
   }
 
-  Array.prototype.map.call(courseIdElements, (elem) => {
+  courseIdElements.forEach(async function(elem) {
     const courseId = elem.innerText;
     if (!DATA.pt[courseId]) {
       DATA.pt[courseId] = {
         courseId,
       };
-      getPTCourseData(courseId).then((courseData) => {
-        DATA.pt[courseId] = courseData;
-        tryUpdateUI();
-      }).catch(() => {
-        tryUpdateUI();
-      });
+      const courseData = await getPTCourseData(courseId);
+      DATA.pt[courseId] = courseData;
+      tryUpdateUI();
     }
-  });
+  })
 }
 
 function createShareLinks() {
@@ -342,8 +341,6 @@ function createShareLinks() {
     elem.querySelector('.course-id-container').appendChild(shareDiv);
   });
 }
-
-// unsafeWindow.window.x = updatePTData;
 
 function main() {
   loadAliasTable().then(() => {
