@@ -166,11 +166,18 @@ async function planetterpAPI(endpoint, parameters) {
       Accept: "application/json"
     }
   });
+  if (response.status != 200) throw new Error("ERROR: " + endpoint + " request failed. Parameters: " + JSON.stringify(parameters));
   return response.json();
 }
 
 async function getPTCourseData(courseId) {
-  const courseSchema = await planetterpAPI("course", {name: courseId});
+  var courseSchema;
+  try {
+    courseSchema = await planetterpAPI("course", {name: courseId});
+  } catch (error) {
+    console.error(error);
+    courseSchema = {"professors":[]};
+  }
   const courseData = {
       courseId,
       instructors: {}
@@ -201,7 +208,13 @@ async function getPTCourseData(courseId) {
   });
 
   await Promise.all(courseSchema.professors.map(async (professor) => {
-    const profSchema = await planetterpAPI("professor", {name: professor}, {});
+    var profSchema
+    try {
+      profSchema = await planetterpAPI("professor", {name: professor}, {});
+    } catch (error) {
+      console.error(error);
+      profSchema = {professor, "slug": "error", "average_rating": "NaN"};
+    }
     courseData.instructors[professor] = {
       name: professor,
       id: profSchema.slug,
