@@ -350,6 +350,7 @@ function main() {
     // First load
     loadPTData();
     loadRateData();
+    createShareLinks();
   });
 }
 
