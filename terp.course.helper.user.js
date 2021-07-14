@@ -158,65 +158,61 @@ function loadRateData() {
   });
 }
 
-function getPTCourseData(courseId) {
-  return new Promise((resolve, reject) => {
-    const url = `https://planetterp.com/course/${courseId}`;
-    GM_xmlhttpRequest({
-      method: 'GET',
-      url,
-      onload: (data) => {
-        if (data.status == 200) {
-          const res = data.responseText;
-          const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
-          const fakeHtml = reader.createElement('html');
-          fakeHtml.innerHTML = res;
+async function ptAPIGet(endpoint, query, headers) {
+  headers.Accept = "application/json";
+  var queryString = "";
+  for (var key in query) {
+    if (!query.hasOwnProperty(key)) continue;
+    queryString += key + "=" + query[key] + "&"
+  }
+  queryString = queryString.slice(0, -1);
+  const response = await fetch("https://api.planetterp.com/v1/" + endpoint + "?" + queryString, {
+    method: "GET",
+    headers: headers
+  });
+  return response
+}
 
-          const courseData = {
-            courseId,
-            instructors: {},
-          };
+async function getPTCourseData(courseId) {
+  const courseSchema = await ptAPIGet("course", {name:courseId}, {});
+  const courseData = {
+      courseId,
+      instructors: {}
+  };
+  const url = `https://planetterp.com/course/${courseId}`;
+  GM_xmlhttpRequest({
+    method: 'GET',
+    url,
+    onload: (data) => {
+      if (data.status == 200) {
+        const res = data.responseText;
+        const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
+        const fakeHtml = reader.createElement('html');
+        fakeHtml.innerHTML = res;
 
-          const avgGPAElem = fakeHtml.querySelector('#course-grades > p.text-center');
-          if (avgGPAElem) {
-            const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
-            if (matchRes && matchRes[1]) {
-              const avgGPA = Number(matchRes[1]);
-              if (!Number.isNaN(avgGPA)) {
-                courseData.avgGPA = avgGPA;
-              }
+        const avgGPAElem = fakeHtml.querySelector('#course-grades > p.text-center');
+        if (avgGPAElem) {
+          const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
+          if (matchRes && matchRes[1]) {
+            const avgGPA = Number(matchRes[1]);
+            if (!Number.isNaN(avgGPA)) {
+              courseData.avgGPA = avgGPA;
             }
           }
-
-          const instructorReviewElementList = fakeHtml.querySelectorAll('#course-professors > div');
-          Array.prototype.map.call(instructorReviewElementList, (instructorCardElem) => {
-            const instructorNameElem = instructorCardElem.querySelector('.card-header a');
-            if (instructorNameElem) {
-              const instructorName = instructorNameElem.innerText;
-              const instructorId = instructorNameElem.getAttribute('href').replace(/^\/professor\//, '');
-
-              const reviewElement = instructorCardElem.querySelector('.card-text');
-              if (reviewElement) {
-                const res = reviewElement.innerText.match(/Average rating: ([0-9]\.[0-9]{2})/);
-                if (res && res[1]) {
-                  const rating = Number(res[1]);
-                  if (!Number.isNaN(rating)) {
-                    courseData.instructors[instructorName] = {
-                      name: instructorName,
-                      id: instructorId,
-                      rating,
-                    }
-                  }
-                }
-              }
-            }
-          });
-
-          return resolve(courseData);
         }
-        reject();
       }
-    });
+    }
   });
+  for (var prof in courseSchema.professors) {
+    console.log(prof);
+    const profSchema = ptAPIGet("professor", {name:prof}, {});
+    courseData.instructors[prof] = {
+      name: prof,
+      id: profSchema.slug,
+      rating: profSchema.average_rating
+    }
+  }
+  return courseData;
 }
 
 function updatePTData() {
@@ -272,7 +268,7 @@ function updatePTData() {
   });
 }
 
-function loadPTData() {
+async function loadPTData() {
   const courseIdElements = document.querySelectorAll('.course-id');
 
   let count = 0;
@@ -293,20 +289,17 @@ function loadPTData() {
     }
   }
 
-  Array.prototype.map.call(courseIdElements, (elem) => {
+  courseIdElements.forEach(async function(elem) {
     const courseId = elem.innerText;
     if (!DATA.pt[courseId]) {
       DATA.pt[courseId] = {
         courseId,
       };
-      getPTCourseData(courseId).then((courseData) => {
-        DATA.pt[courseId] = courseData;
-        tryUpdateUI();
-      }).catch(() => {
-        tryUpdateUI();
-      });
+      const courseData = await getPTCourseData(courseId);
+      DATA.pt[courseId] = courseData;
+      tryUpdateUI();
     }
-  });
+  })
 }
 
 function createShareLinks() {
