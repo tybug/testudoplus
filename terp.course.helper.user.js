@@ -258,7 +258,7 @@ function updatePTData() {
 
     Array.prototype.map.call(instructorElemList, (elem) => {
       const instructorName = getInstructorName(elem);
-      if (DATA.pt && DATA.pt[courseId] && DATA.pt[courseId].instructors && DATA.pt[courseId].instructors[instructorName]) {
+      if (DATA?.pt?.[courseId]?.instructors?.[instructorName]) {
         const oldElem = elem.querySelector('.pt-rating-box');
         if (oldElem) {
           oldElem.remove();
