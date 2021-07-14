@@ -58,7 +58,6 @@ function getInstructorName(elem) {
 }
 
 function updateInstructorRating() {
-  // unsafeWindow.console.log(DATA.rmp);
   const instructorElements = unsafeWindow.document.querySelectorAll('.section-instructor');
   Array.prototype.map.call(instructorElements, (elem) => {
     const instructorName = getInstructorName(elem);
@@ -83,7 +82,6 @@ function updateInstructorRating() {
 
 function getRecordId(name) {
   return new Promise((resolve, reject) => {
-    // unsafeWindow.console.log(ALIAS, name);
     if (ALIAS[name]) {
       const recordId = ALIAS[name].rmpId;
       if (recordId) {
@@ -101,7 +99,6 @@ function getRecordId(name) {
           const suggestionList = res.response.docs;
           const [instructorInfo] = suggestionList.filter(d => d.schoolid_s === '1270');
           if (instructorInfo) {
-            // unsafeWindow.console.log(instructorInfo);
             return resolve(instructorInfo.pk_id);
           }
         }
@@ -344,8 +341,6 @@ function createShareLinks() {
     elem.querySelector('.course-id-container').appendChild(shareDiv);
   });
 }
-
-// unsafeWindow.window.x = updatePTData;
 
 function main() {
   loadAliasTable().then(() => {
