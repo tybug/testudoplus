@@ -213,7 +213,7 @@ async function getPTCourseData(courseId) {
       profSchema = await planetterpAPI("professor", {name: professor}, {});
     } catch (error) {
       console.error(error);
-      profSchema = {professor, "slug": "error", "average_rating": "NaN"};
+      profSchema = {professor, "slug": "error", "average_rating": null};
     }
     courseData.instructors[professor] = {
       name: professor,
