@@ -469,16 +469,4 @@ styleInjectElem.id = 'umd-rmp-style-inject';
 styleInjectElem.innerHTML = styleInject;
 document.head.appendChild(styleInjectElem);
 
-// Get rid of the crazy amount of unused parameters in SOC urls. I couldn't find a way to get rid of courseStartCompare,
-// courseStartMin, and courseStartAM, even though they're all empty values.
-// This will throw away any filters except courseId and termId, but almost nobody filters by anything else anyway. Can support more parameters
-// if neceesary (likely by checking if the parameter value is equal to its default, discarding it if so, and keeping it otherwise).
-const url = window.location.href;
-var courseId = url.split("courseId=")[1].split("&")[0];
-var termId = url.split("termId=")[1].split("&")[0];
-
-const newUrl = `https://app.testudo.umd.edu/soc/search?courseId=${courseId}&termId=${termId}&courseStartCompare=&courseStartMin=&courseStartAM=`;
-
-window.history.pushState("", "", newUrl);
-
 main();
