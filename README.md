@@ -1,6 +1,8 @@
-# Terp-Course-Helper
+# testudo+
 
-Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp](https://planetterp.com/) directly into the course listing. Also lets you sort courses by their average GPA.
+* Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp](https://planetterp.com/) ratings directly into the course listing
+* Sort courses by average GPA
+* Adds a "share" button to copy a clean url to any course
 
 <img width="990" alt="Screen Shot 2019-04-13 at 4 56 19 PM" src="https://user-images.githubusercontent.com/4535844/56085203-75799980-5e0d-11e9-87d6-481fd61043f4.png">
 
