@@ -10,7 +10,7 @@
 // @run-at      document-end
 // @version     0.1.3
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
-// @namespace   dkt.umdrmp.testudo
+// @namespace   tybug
 // ==/UserScript==
 
 const DATA = {
