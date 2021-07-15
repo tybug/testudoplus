@@ -20,3 +20,7 @@ Make sure to allow any outgoing traffic made by this plugin.
 Some professors have different names on testudo and ratemyprofessor. To solve this we maintain [an alias file](https://github.com/tybug/Terp-Course-Helper/blob/master/alias.json) which maps professor names to ratemyprofessor ids. 
 
 Feel free to make a pull request to update this list! Pull requests are always welcome.
+
+## Credits
+
+This is an up to date fork of the original [terp course helper](https://github.com/DickyT/Terp-Course-Helper), which was left unmaintained as of 2020. 
