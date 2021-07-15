@@ -1,4 +1,4 @@
-# testudo+
+# Testudo+
 
 * Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp](https://planetterp.com/) ratings directly into the course listing
 * Sort courses by average GPA
