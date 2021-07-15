@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name        Terp Course Helper
-// @author      DickyT / tybug
-// @license     WTFPL
+// @name        Testudo+
+// @author      tybug
+// @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
 // @modified    07/15/2021
