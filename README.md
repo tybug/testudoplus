@@ -23,4 +23,4 @@ Feel free to make a pull request to update this list! Pull requests are always w
 
 ## Credits
 
-This is an up to date fork of the original [terp course helper](https://github.com/DickyT/Terp-Course-Helper), which was left unmaintained as of 2020. 
+This is an up to date fork of the original [terp course helper](https://github.com/DickyT/Terp-Course-Helper), which has been unmaintained since 2020. 
