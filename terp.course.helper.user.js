@@ -321,6 +321,7 @@ function createShareLinks() {
   Array.prototype.map.call(courseElements, (elem) => {
     const shareDiv = document.createElement('div');
     shareDiv.className = 'share-course-div';
+    shareDiv.setAttribute("data-tooltip", "click to copy");
     const shareLink = document.createElement('a');
     shareLink.className = 'share-course-link';
     shareLink.innerText = "Share";
@@ -451,11 +452,10 @@ const styleInject = `
   opacity: 0;
 
   /* customizable */
-  transition: all 0.15s ease;
-  padding: 3px;
+  padding: 7px;
   color: white;
   border-radius: 5px;
-  width: 150px;
+  width: 110px;
   z-index: 10;
 }
 
@@ -465,8 +465,8 @@ const styleInject = `
 
   /* customizable */
   background: black;
-  margin-top: -30px;
-  margin-left: -10px;
+  margin-top: -40px;
+  margin-left: 10px;
 }
 
 [data-tooltip]:not([data-tooltip-persistent]):before {
