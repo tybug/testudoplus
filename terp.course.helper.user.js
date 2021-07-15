@@ -4,14 +4,13 @@
 // @license     WTFPL
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    05/01/2021
+// @modified    07/14/2021
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.1.1
+// @version     0.1.2
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   dkt.umdrmp.testudo
-// @require     https://unpkg.com/ajax-hook/dist/ajaxhook.min.js
 // ==/UserScript==
 
 const DATA = {
@@ -59,7 +58,6 @@ function getInstructorName(elem) {
 }
 
 function updateInstructorRating() {
-  // unsafeWindow.console.log(DATA.rmp);
   const instructorElements = unsafeWindow.document.querySelectorAll('.section-instructor');
   Array.prototype.map.call(instructorElements, (elem) => {
     const instructorName = getInstructorName(elem);
@@ -84,7 +82,6 @@ function updateInstructorRating() {
 
 function getRecordId(name) {
   return new Promise((resolve, reject) => {
-    // unsafeWindow.console.log(ALIAS, name);
     if (ALIAS[name]) {
       const recordId = ALIAS[name].rmpId;
       if (recordId) {
@@ -102,7 +99,6 @@ function getRecordId(name) {
           const suggestionList = res.response.docs;
           const [instructorInfo] = suggestionList.filter(d => d.schoolid_s === '1270');
           if (instructorInfo) {
-            // unsafeWindow.console.log(instructorInfo);
             return resolve(instructorInfo.pk_id);
           }
         }
@@ -159,65 +155,70 @@ function loadRateData() {
   });
 }
 
-function getPTCourseData(courseId) {
-  return new Promise((resolve, reject) => {
-    const url = `https://planetterp.com/course/${courseId}`;
-    GM_xmlhttpRequest({
-      method: 'GET',
-      url,
-      onload: (data) => {
-        if (data.status == 200) {
-          const res = data.responseText;
-          const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
-          const fakeHtml = reader.createElement('html');
-          fakeHtml.innerHTML = res;
+async function planetterpAPI(endpoint, parameters) {
+  const params = new URLSearchParams(parameters).toString()
+  const response = await fetch(`https://api.planetterp.com/v1/${endpoint}?${params}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json"
+    }
+  });
+  if (response.status != 200) throw new Error("ERROR: " + endpoint + " request failed. Parameters: " + JSON.stringify(parameters));
+  return response.json();
+}
 
-          const courseData = {
-            courseId,
-            instructors: {},
-          };
+async function getPTCourseData(courseId) {
+  var courseSchema;
+  try {
+    courseSchema = await planetterpAPI("course", {name: courseId});
+  } catch (error) {
+    console.error(error);
+    courseSchema = {"professors":[]};
+  }
+  const courseData = {
+      courseId,
+      instructors: {}
+  };
+  const url = `https://planetterp.com/course/${courseId}`;
+  GM_xmlhttpRequest({
+    method: 'GET',
+    url,
+    onload: (data) => {
+      if (data.status == 200) {
+        const res = data.responseText;
+        const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
+        const fakeHtml = reader.createElement('html');
+        fakeHtml.innerHTML = res;
 
-          const avgGPAElem = fakeHtml.querySelector('#course-grades > p.text-center');
-          if (avgGPAElem) {
-            const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
-            if (matchRes && matchRes[1]) {
-              const avgGPA = Number(matchRes[1]);
-              if (!Number.isNaN(avgGPA)) {
-                courseData.avgGPA = avgGPA;
-              }
+        const avgGPAElem = fakeHtml.querySelector('#course-grades > p.text-center');
+        if (avgGPAElem) {
+          const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
+          if (matchRes && matchRes[1]) {
+            const avgGPA = Number(matchRes[1]);
+            if (!Number.isNaN(avgGPA)) {
+              courseData.avgGPA = avgGPA;
             }
           }
-
-          const instructorReviewElementList = fakeHtml.querySelectorAll('#course-professors > div');
-          Array.prototype.map.call(instructorReviewElementList, (instructorCardElem) => {
-            const instructorNameElem = instructorCardElem.querySelector('.card-header a');
-            if (instructorNameElem) {
-              const instructorName = instructorNameElem.innerText;
-              const instructorId = instructorNameElem.getAttribute('href').replace(/^\/professor\//, '');
-
-              const reviewElement = instructorCardElem.querySelector('.card-text');
-              if (reviewElement) {
-                const res = reviewElement.innerText.match(/Average rating: ([0-9]\.[0-9]{2})/);
-                if (res && res[1]) {
-                  const rating = Number(res[1]);
-                  if (!Number.isNaN(rating)) {
-                    courseData.instructors[instructorName] = {
-                      name: instructorName,
-                      id: instructorId,
-                      rating,
-                    }
-                  }
-                }
-              }
-            }
-          });
-
-          return resolve(courseData);
         }
-        reject();
       }
-    });
+    }
   });
+
+  await Promise.all(courseSchema.professors.map(async (professor) => {
+    var profSchema
+    try {
+      profSchema = await planetterpAPI("professor", {name: professor}, {});
+    } catch (error) {
+      console.error(error);
+      profSchema = {professor, "slug": "error", "average_rating": null};
+    }
+    courseData.instructors[professor] = {
+      name: professor,
+      id: profSchema.slug,
+      rating: profSchema.average_rating
+    }
+  }));
+  return courseData;
 }
 
 function updatePTData() {
@@ -254,7 +255,7 @@ function updatePTData() {
 
     Array.prototype.map.call(instructorElemList, (elem) => {
       const instructorName = getInstructorName(elem);
-      if (DATA.pt && DATA.pt[courseId] && DATA.pt[courseId].instructors && DATA.pt[courseId].instructors[instructorName]) {
+      if (DATA?.pt?.[courseId]?.instructors?.[instructorName]) {
         const oldElem = elem.querySelector('.pt-rating-box');
         if (oldElem) {
           oldElem.remove();
@@ -273,7 +274,7 @@ function updatePTData() {
   });
 }
 
-function loadPTData() {
+async function loadPTData() {
   const courseIdElements = document.querySelectorAll('.course-id');
 
   let count = 0;
@@ -294,20 +295,17 @@ function loadPTData() {
     }
   }
 
-  Array.prototype.map.call(courseIdElements, (elem) => {
+  courseIdElements.forEach(async function(elem) {
     const courseId = elem.innerText;
     if (!DATA.pt[courseId]) {
       DATA.pt[courseId] = {
         courseId,
       };
-      getPTCourseData(courseId).then((courseData) => {
-        DATA.pt[courseId] = courseData;
-        tryUpdateUI();
-      }).catch(() => {
-        tryUpdateUI();
-      });
+      const courseData = await getPTCourseData(courseId);
+      DATA.pt[courseId] = courseData;
+      tryUpdateUI();
     }
-  });
+  })
 }
 
 function createShareLinks() {
@@ -348,25 +346,12 @@ function genShareLink(courseId) {
   return toCopy;
 }
 
-// unsafeWindow.window.x = updatePTData;
-
 function main() {
   loadAliasTable().then(() => {
     // First load
     loadPTData();
     loadRateData();
     createShareLinks();
-    // Add hook to HTTP events
-    const hookAjax = unsafeWindow.window.hookAjax;
-    hookAjax({
-      onreadystatechange: (xhr) => {
-        if (/https?:\/\/app.testudo.umd.edu\/soc\/[0-9]{6}\/sections\?*/.test(xhr.responseURL)) {
-          if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-            setTimeout(loadRateData, 200);
-          }
-        }
-      },
-    });
   });
 }
 
@@ -413,11 +398,6 @@ function resetSort() {
     headerList.forEach(e => e.remove());
   }
 }
-
-const ajaxHookLib = document.createElement('script');
-ajaxHookLib.addEventListener('load', main);
-ajaxHookLib.src = 'https://unpkg.com/ajax-hook/dist/ajaxhook.min.js';
-document.head.appendChild(ajaxHookLib);
 
 const styleInject = `
 .rmp-rating-box,
@@ -498,14 +478,4 @@ styleInjectElem.id = 'umd-rmp-style-inject';
 styleInjectElem.innerHTML = styleInject;
 document.head.appendChild(styleInjectElem);
 
-// Get rid of the crazy amount of unused parameters in SOC urls. I couldn't find a way to get rid of courseStartCompare,
-// courseStartMin, and courseStartAM, even though they're all empty values.
-// This will throw away any filters except courseId and termId, but almost nobody filters by anything else anyway. Can support more parameters
-// if neceesary (likely by checking if the parameter value is equal to its default, discarding it if so, and keeping it otherwise).
-const url = window.location.href;
-var courseId = url.split("courseId=")[1].split("&")[0];
-var termId = url.split("termId=")[1].split("&")[0];
-
-const newUrl = `https://app.testudo.umd.edu/soc/search?courseId=${courseId}&termId=${termId}&courseStartCompare=&courseStartMin=&courseStartAM=`;
-
-window.history.pushState("", "", newUrl);
+main();
