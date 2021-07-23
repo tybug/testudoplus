@@ -269,7 +269,6 @@ async function loadPTData() {
     }
 
     if (count === courseIdElements.length) {
-      console.log('LOAD DONE');
       sortBtn.textContent = 'Sort By Average GPA Descending';
       sortBtn.disabled = false;
     }
