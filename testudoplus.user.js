@@ -80,13 +80,10 @@ function updateInstructorRating() {
   updatePTData();
 }
 
-function getRecordId(name) {
+function getInstructor(name) {
   return new Promise((resolve, reject) => {
     if (ALIAS[name]) {
-      const recordId = ALIAS[name].rmpId;
-      if (recordId) {
-        return resolve(recordId);
-      }
+      name = ALIAS[name].rmp_name;
     }
     const url = `https://search-production.ratemyprofessors.com/solr/rmp/select?q=${encodeURIComponent(name)}&defType=edismax&qf=teacherfullname_t%5E1000%20autosuggest&bf=pow%28total_number_of_ratings_i%2C2.1%29&siteName=rmp&rows=20&start=0&fl=pk_id%20teacherfirstname_t%20teacherlastname_t%20total_number_of_ratings_i%20schoolname_s%20averageratingscore_rf%20averageclarityscore_rf%20averagehelpfulscore_rf%20averageeasyscore_rf%20chili_i%20schoolid_s%20teacherdepartment_s&fq=schoolid_s%3A1270&wt=json`;
     GM_xmlhttpRequest({
@@ -96,33 +93,20 @@ function getRecordId(name) {
         if (data.status == 200) {
           const res = JSON.parse(data.responseText);
 
-          const suggestionList = res.response.docs;
-          const [instructorInfo] = suggestionList.filter(d => d.schoolid_s === '1270');
-          if (instructorInfo) {
-            return resolve(instructorInfo.pk_id);
-          }
-        }
-        reject();
-      }
-    });
-  });
-}
-
-function getRating(recordId) {
-  return new Promise((resolve, reject) => {
-    const url = `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${recordId}`;
-    GM_xmlhttpRequest({
-      method: 'GET',
-      url,
-      onload: (data) => {
-        if (data.status == 200) {
-          const res = data.responseText;
-          const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
-          const fakeHtml = reader.createElement('html');
-          fakeHtml.innerHTML = res;
-          const ratingRawElem = fakeHtml.querySelector('[class^="RatingValue__Numerator"]');
-          if (ratingRawElem) {
-            return resolve(Number(ratingRawElem.innerText));
+          var instructors = res.response.docs;
+          var instructor_match = null;
+          if (instructors) {
+            instructors.forEach(function(instructor) {
+              // if any of the returned profs match our name exactly, use that
+              if (`${instructor.teacherfirstname_t} ${instructor.teacherlastname_t}` == name) {
+                instructor_match = instructor;
+              }
+            });
+            // otherwise, just take the first one
+            if (instructor_match == null) {
+              instructor_match = instructors[0];
+            }
+            return resolve(instructor_match);
           }
         }
         reject();
@@ -139,15 +123,11 @@ function loadRateData() {
       DATA.rmp[instructorName] = {
         name: instructorName,
       };
-      getRecordId(instructorName).then((recordId) => {
-        getRating(recordId).then((rating) => {
-          DATA.rmp[instructorName].recordId = recordId;
-          DATA.rmp[instructorName].rating = rating;
+      getInstructor(instructorName).then((instructor) => {
+          DATA.rmp[instructorName].recordId = instructor.pk_id;
+          DATA.rmp[instructorName].rating = instructor.averageratingscore_rf;
 
           updateInstructorRating();
-        }).catch(() => {
-          updateInstructorRating();
-        });
       }).catch(() => {
         updateInstructorRating();
       });
