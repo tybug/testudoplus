@@ -17,10 +17,18 @@ Make sure to allow any outgoing traffic made by this plugin.
 
 ## Contributing
 
-Some professors have different names on testudo and ratemyprofessor. To solve this we maintain [an alias file](https://github.com/tybug/testudoplus/blob/master/alias.json) which maps professor names to ratemyprofessor ids. 
+Some professors have different names on testudo and ratemyprofessor. To solve this we maintain [an alias file](https://github.com/tybug/testudoplus/blob/master/alias.json) which maps names on testudo to names on ratemyprofessor (and, in the future, planetterp).
 
-Feel free to make a pull request to update this list! Pull requests are always welcome.
+For example, if "Jose Calderon" was actually called "Jose M Calderon" on ratemyprofessor - he's not, but for the sake of example - his entry would look like this:
+
+```json
+  "Jose Calderon": {
+    "rmp_name": "Jose M Calderon"
+  }
+```
+
+Feel free to make a pull request to update this alias file! Pull requests are always welcome.
 
 ## Credits
 
-This is an up to date fork of the original [terp course helper](https://github.com/DickyT/Terp-Course-Helper), which has been unmaintained since 2020. 
+This is an up to date fork of the original [terp course helper](https://github.com/DickyT/Terp-Course-Helper), which has been unmaintained since 2020.
