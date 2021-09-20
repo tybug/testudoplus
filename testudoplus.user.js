@@ -159,30 +159,11 @@ async function getPTCourseData(courseId) {
       courseId,
       instructors: {}
   };
-  const url = `https://planetterp.com/course/${courseId}`;
-  GM_xmlhttpRequest({
-    method: 'GET',
-    url,
-    onload: (data) => {
-      if (data.status == 200) {
-        const res = data.responseText;
-        const reader = document.implementation.createHTMLDocument('reader'); // prevent loading any resources
-        const fakeHtml = reader.createElement('html');
-        fakeHtml.innerHTML = res;
 
-        const avgGPAElem = fakeHtml.querySelector('#course-grades > p.text-center');
-        if (avgGPAElem) {
-          const matchRes = avgGPAElem.innerText.match(/Average GPA: ([0-9]\.[0-9]{2})/);
-          if (matchRes && matchRes[1]) {
-            const avgGPA = Number(matchRes[1]);
-            if (!Number.isNaN(avgGPA)) {
-              courseData.avgGPA = avgGPA;
-            }
-          }
-        }
-      }
-    }
-  });
+  // TODO lump this and the next set of promises together so they can all happen asyncly, we don't care
+  // what order they happen in, just that they all finish before this function returns
+  let course = await planetterpAPI("course", {name: courseId}, {});
+  courseData.avgGPA = course.average_gpa;
 
   await Promise.all(courseSchema.professors.map(async (professor) => {
     var profSchema
