@@ -4,11 +4,11 @@
 // @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    07/15/2021
+// @modified    09/20/2021
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.1.3
+// @version     0.1.4
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   tybug
 // ==/UserScript==
