@@ -236,26 +236,21 @@ function updatePTData() {
 }
 
 async function loadPTData() {
-  const courseIdElements = document.querySelectorAll('.course-id');
+  const courseIdElements = Array.from(document.querySelectorAll('.course-id'));
 
-  let count = 0;
+  let numLoaded = 0;
 
   function tryUpdateUI() {
-    count += 1;
+    updatePTData();
+    sortBtn.textContent = `Sort By Average GPA Descending (Loading ${numLoaded}/${courseIdElements.length})`;
 
-    sortBtn.textContent = `Sort By Average GPA Descending (Loading ${count}/${courseIdElements.length})`;
-
-    if (count >= courseIdElements.length) {
-      updatePTData();
-    }
-
-    if (count === courseIdElements.length) {
+    if (numLoaded === courseIdElements.length) {
       sortBtn.textContent = 'Sort By Average GPA Descending';
       sortBtn.disabled = false;
     }
   }
 
-  courseIdElements.forEach(async function(elem) {
+  await Promise.allSettled(courseIdElements.map(async (elem) => {
     const courseId = elem.innerText;
     if (!DATA.pt[courseId]) {
       DATA.pt[courseId] = {
@@ -263,9 +258,10 @@ async function loadPTData() {
       };
       const courseData = await getPTCourseData(courseId);
       DATA.pt[courseId] = courseData;
+      numLoaded += 1;
       tryUpdateUI();
     }
-  })
+  }));
 }
 
 function createShareLinks() {
