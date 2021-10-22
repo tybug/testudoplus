@@ -8,7 +8,7 @@
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.1.5
+// @version     0.1.6
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   tybug
 // ==/UserScript==
@@ -296,6 +296,8 @@ function genShareLink(courseId) {
   var termId;
   if (currentURL.includes("termId=")) {
     termId = currentURL.split("termId=")[1].split("&")[0];
+  } else if (currentURL.includes("/gen-ed/")) {
+    termId = currentURL.split("/gen-ed/")[1].split("/")[0];
   } else {
     termId = currentURL.split("/soc/")[1].split("/")[0];
   }
