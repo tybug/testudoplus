@@ -3,10 +3,11 @@
 * Integrates [RateMyProfessors](https://www.ratemyprofessors.com/) and [PlanetTerp](https://planetterp.com/) ratings directly into the course listing
 * Sort courses by average GPA
 * Adds a "share" button to copy a clean url to any course
+* Generates course links wherever courses are referenced
 
-<img width="990" alt="Screen Shot 2019-04-13 at 4 56 19 PM" src="https://user-images.githubusercontent.com/4535844/56085203-75799980-5e0d-11e9-87d6-481fd61043f4.png">
+<img alt="CMSC132 0.1.7 Screenshot" src="https://user-images.githubusercontent.com/42500591/139629677-8bfce047-ed39-40e4-b3bf-e9da8ff1f8da.png">
 
-<img width="1126" alt="Screen Shot 2020-03-02 at 3 51 23 AM" src="https://user-images.githubusercontent.com/4535844/75660184-578d7100-5c39-11ea-9cf5-322a3dd8cd9a.png">
+<img alt="CMSC 3 Classes 0.1.7 Screenshot" src="https://user-images.githubusercontent.com/42500591/139629987-b1175ee4-1cac-4f94-bb9f-05b0c34d27aa.png">
 
 ## Installation
 
@@ -14,6 +15,8 @@
 2. Then [click here](https://github.com/tybug/testudoplus/raw/master/testudoplus.user.js) to install the script
 
 Make sure to allow any outgoing traffic made by this plugin.
+
+Don't forget to come back occasionally to check for plugin updates, as period changes occur all the time.
 
 ## Contributing
 
