@@ -153,17 +153,16 @@ async function getPTCourseData(courseId) {
     courseSchema = await planetterpAPI("course", {name: courseId});
   } catch (error) {
     console.error(error);
-    courseSchema = {"professors":[]};
+    courseSchema = {"professors":[],"average_gpa":null};
   }
   const courseData = {
       courseId,
-      instructors: {}
+      instructors: {},
+      avgGPA: courseSchema.average_gpa
   };
 
   // TODO lump this and the next set of promises together so they can all happen asyncly, we don't care
   // what order they happen in, just that they all finish before this function returns
-  let course = await planetterpAPI("course", {name: courseId}, {});
-  courseData.avgGPA = course.average_gpa;
 
   await Promise.all(courseSchema.professors.map(async (professor) => {
     var profSchema
