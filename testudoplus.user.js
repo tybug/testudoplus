@@ -4,13 +4,13 @@
 // @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    10/08/2021
+// @modified    11/1/2021
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
 // @version     0.1.7
-// @description Integrate Rate My Professor to Testudo Schedule of Classes
-// @namespace   tybug
+// @description Improve the Testudo Schedule of Classes
+// @namespace   tybug, minermaniac447
 // ==/UserScript==
 
 const DATA = {
@@ -312,13 +312,14 @@ function main() {
     loadRateData();
     createShareLinks();
     // Linkify all courses in descriptions
-    linkifyCourseDescriptions();
+    linkifyCourses();
   });
 }
 
-function linkifyCourseDescriptions() {
+function linkifyCourses() {
   const allPrereqs = [...document.querySelectorAll('div.approved-course-text')];
   const allDescs = [...document.querySelectorAll('div.course-text')];
+  const allIDs = [...document.querySelectorAll('div.course-id')];
   const courseReg = /([A-Z]{4}[0-9]{3}[A-Z]?)/g;
 
   allPrereqs.forEach((prereqDiv) => {
@@ -332,11 +333,15 @@ function linkifyCourseDescriptions() {
 
   allDescs.forEach((descDiv) => {
     descDiv.innerHTML = descDiv.innerHTML.replaceAll(courseReg, linkifyHelper);
-  })
+  });
+
+  allIDs.forEach((idDiv) => {
+    idDiv.innerHTML = idDiv.innerHTML.replaceAll(courseReg, linkifyHelper);
+  });
 }
 
 function linkifyHelper(match, offset, string) {
-  return "<a href=" + genShareLink(match) + ' target="_blank">' + match + "</a>";
+  return '<a class="linkified-course" href=' + genShareLink(match) + ">" + match + "</a>";
 }
 
 function sortAllByGPA() {
@@ -425,6 +430,9 @@ const styleInject = `
 .share-course-link:hover,
 .share-course-link:active {
   text-decoration: none;
+}
+.linkified-course:hover {
+  text-decoration: underline;
 }
 
 /* fancy tooltip stolen from https://stackoverflow.com/a/25813336, god bless him */
