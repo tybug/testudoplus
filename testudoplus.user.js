@@ -8,7 +8,7 @@
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.1.6
+// @version     0.1.7
 // @description Integrate Rate My Professor to Testudo Schedule of Classes
 // @namespace   tybug
 // ==/UserScript==
@@ -311,7 +311,32 @@ function main() {
     loadPTData();
     loadRateData();
     createShareLinks();
+    // Linkify all courses in descriptions
+    linkifyCourseDescriptions();
   });
+}
+
+function linkifyCourseDescriptions() {
+  const allPrereqs = [...document.querySelectorAll('div.approved-course-text')];
+  const allDescs = [...document.querySelectorAll('div.course-text')];
+  const courseReg = /([A-Z]{4}[0-9]{3}[A-Z]?)/g;
+
+  allPrereqs.forEach((prereqDiv) => {
+    if (prereqDiv.innerHTML.includes("<div>")) {
+      Array.from(prereqDiv.children[0].children[0].children).forEach((replace) => {
+      replace.innerHTML = replace.innerHTML.replaceAll(/([A-Z]{4}[0-9]{3}[A-Z]?)/g, linkifyHelper);
+    })} else {
+      prereqDiv.innerHTML = prereqDiv.innerHTML.replaceAll(/([A-Z]{4}[0-9]{3}[A-Z]?)/g, linkifyHelper);
+    }
+  });
+
+  allDescs.forEach((descDiv) => {
+    descDiv.innerHTML = descDiv.innerHTML.replaceAll(courseReg, linkifyHelper);
+  })
+}
+
+function linkifyHelper(match, offset, string) {
+  return "<a href=" + genShareLink(match) + ' target="_blank">' + match + "</a>";
 }
 
 function sortAllByGPA() {
