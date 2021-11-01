@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Testudo+
-// @author      tybug
+// @author      tybug, minermaniac447
 // @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
@@ -10,7 +10,7 @@
 // @run-at      document-end
 // @version     0.1.7
 // @description Improve the Testudo Schedule of Classes
-// @namespace   tybug, minermaniac447
+// @namespace   tybug
 // ==/UserScript==
 
 const DATA = {
