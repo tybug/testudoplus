@@ -16,7 +16,7 @@
 
 Make sure to allow any outgoing traffic made by this plugin.
 
-Make sure to also check back periodically for plugin updates. To update, click the same link you would to instal.
+Make sure to also check back periodically for plugin updates. To update, click the same link you would to install.
 
 ## Contributing
 
