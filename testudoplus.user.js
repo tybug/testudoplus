@@ -27,7 +27,13 @@ const COURSEPATTERN = /([a-zA-Z]{4}[0-9]{3}[a-zA-Z]?)/g;
 
 // add sorting button
 const sortBtn = document.createElement('button');
-sortBtn.addEventListener('click', sortAllByGPA);
+sortBtn.addEventListener('click', function() {
+  sortCourseElements((courseElem, otherCourseElem) => {
+    if (!DATA.pt[courseElem.id] || !DATA.pt[courseElem.id].avgGPA) { return 100; }
+    else if (!DATA.pt[otherCourseElem.id] || !DATA.pt[otherCourseElem.id].avgGPA) { return -100; }
+    else { return DATA.pt[otherCourseElem.id].avgGPA - DATA.pt[courseElem.id].avgGPA; }
+  });
+});
 sortBtn.disabled = true;
 sortBtn.textContent = 'Sort By Average GPA Descending (Loading data, please wait)';
 document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.querySelector('#courses-page'));
@@ -35,9 +41,36 @@ document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.
 // add reset button
 const resetBtn = document.createElement('button');
 resetBtn.style.cssText = "margin-left: 20px;";
-resetBtn.addEventListener('click', resetSort);
+resetBtn.addEventListener('click', function() {
+  sortCourseElements((course1, course2) => course1.id.toLowerCase().localeCompare(course2.id.toLowerCase()));
+});
 resetBtn.textContent = 'Reset Sort';
 document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document.querySelector('#courses-page'));
+
+// A generic course sorting function. If there are multiple department headers, it will remove them all
+function sortCourseElements(sorter) {
+  const coursesContainer = document.querySelector(".courses-container");
+  const allCourses = [...document.querySelectorAll("div.course")];
+  const headerList = document.querySelectorAll(".course-prefix-container");
+
+  allCourses.sort(sorter);
+  allCourses.forEach(courseElem => {
+    coursesContainer.append(courseElem);
+  });
+
+  if (headerList.length > 1) {
+    const headerParent = document.querySelector("#courses-page");
+    // create a "Sorted" header to replace the others, which all have to be deleted
+    const genericHeader = document.createElement("div");
+    genericHeader.innerHTML = '<div class="course-prefix-info"><div class="row"><div class="eight columns"><span class="course-prefix-name">Sorted Courses</span></div></div></div>';
+    genericHeader.setAttribute("class", "course-prefix-container");
+    genericHeader.setAttribute("id", "Sorted");
+    headerParent.insertBefore(genericHeader, headerList[0]);
+    genericHeader.append(coursesContainer); // move the coursesContainer element to the new header
+
+    headerList.forEach(e => e.remove());
+  }
+}
 
 function loadAliasTable() {
   return new Promise((resolve) => {
@@ -377,50 +410,6 @@ function linkifyCourses() {
 
 function linkifyHelper(match, offset, string) {
   return '<a class="linkified-course" href=' + genShareLink(match) + ">" + match + "</a>";
-}
-
-function sortAllByGPA() {
-  const coursesContainer = document.querySelector('.courses-container');
-  const allCourses = [...document.querySelectorAll('div.course')];
-
-  allCourses.sort((courseElem, otherCourseElem) => {
-    if (!DATA.pt[courseElem.id] || !DATA.pt[courseElem.id].avgGPA) {
-      return 100;
-    }
-    if (!DATA.pt[otherCourseElem.id] || !DATA.pt[otherCourseElem.id].avgGPA) {
-      return -100;
-    }
-    return DATA.pt[otherCourseElem.id].avgGPA - DATA.pt[courseElem.id].avgGPA;
-  });
-
-  allCourses.forEach((courseElem) => {
-    coursesContainer.append(courseElem);
-  });
-
-  const headerList = document.querySelectorAll('.course-prefix-container');
-
-  if (headerList.length > 1) {
-    headerList.forEach(e => e.remove());
-  }
-}
-
-function resetSort() {
-  const coursesContainer = document.querySelector('.courses-container');
-  const allCourses = [...document.querySelectorAll('div.course')];
-
-  allCourses.sort((course1, course2) => {
-    return course1.id.toLowerCase().localeCompare(course2.id.toLowerCase());
-  });
-
-  allCourses.forEach((courseElem) => {
-    coursesContainer.append(courseElem);
-  });
-
-  const headerList = document.querySelectorAll('.course-prefix-container');
-
-  if (headerList.length > 1) {
-    headerList.forEach(e => e.remove());
-  }
 }
 
 const styleInject = `
