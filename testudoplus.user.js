@@ -4,11 +4,11 @@
 // @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    11/1/2021
+// @modified    11/4/2021
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.1.7
+// @version     0.1.8
 // @description Improve the Testudo Schedule of Classes
 // @namespace   tybug
 // ==/UserScript==
@@ -31,7 +31,7 @@ document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.
 
 // add reset button
 const resetBtn = document.createElement('button');
-resetBtn.style.cssText = "margin-left: 20px;"
+resetBtn.style.cssText = "margin-left: 20px;";
 resetBtn.addEventListener('click', resetSort);
 resetBtn.textContent = 'Reset Sort';
 document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document.querySelector('#courses-page'));
@@ -168,7 +168,7 @@ async function getPTCourseData(courseId) {
   // what order they happen in, just that they all finish before this function returns
 
   await Promise.all(courseSchema.professors.map(async (professor) => {
-    var profSchema
+    var profSchema;
     try {
       profSchema = await planetterpAPI("professor", {name: professor}, {});
     } catch (error) {
@@ -290,16 +290,6 @@ function createShareLinks() {
     });
     elem.querySelector('.course-id-container').appendChild(shareDiv);
   });
-}
-
-function getTermId(url) {
-  if (url.includes("termId=")) { // for most URLs, this will return the term id
-    return url.split("termId=")[1].split("&")[0];
-  } else if (url.includes("/gen-ed/")) { // the geneds page has the term id after the /gen-ed/ address portion, similar to how individual courses or depts do it
-    return url.split("/gen-ed/")[1].split("/")[0];
-  } else { // if it's another shortlink
-    return url.split("/soc/")[1].split("/")[0];
-  }
 }
 
 // An even more abstract TermID getter, from a url
