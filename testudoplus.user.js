@@ -18,9 +18,12 @@ const DATA = {
   pt: {},
 };
 let ALIAS = {};
-const FULLURL = "&_openSectionsOnly=on&creditCompare=%3E%3D&credits=0.0&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on";
-const DEPTPATTERN = /^([A-Z]{4})$/g;
-const COURSEPATTERN = /([A-Z]{4}[0-9]{3}[A-Z]?)/g;
+const FULLURLS = [
+  "&_openSectionsOnly=on&creditCompare=%3E%3D&credits=0.0&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on",
+  "&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on"
+];
+const DEPTPATTERN = /^([a-zA-Z]{4})$/g;
+const COURSEPATTERN = /([a-zA-Z]{4}[0-9]{3}[a-zA-Z]?)/g;
 
 // add sorting button
 const sortBtn = document.createElement('button');
@@ -308,7 +311,7 @@ function genShortLink(courseDept, courseId = "") {
   const baseURL = "https://app.testudo.umd.edu/soc";
   const termId = getTermId(window.location.href);
   // if courseId is a blank string (default if it's missing), don't include that portion of the link
-  return baseURL + "/" + termId + "/" + courseDept + (courseId === "" ? "" : "/" + courseId);
+  return baseURL + "/" + termId + "/" + courseDept.toUpperCase() + (courseId === "" ? "" : "/" + courseId).toUpperCase();
 }
 
 // Specifically generates course share links
@@ -331,7 +334,12 @@ function main() {
 // If this is a super long search URL with all default params, replace it with a direct URL if possible
 function shortenLongURL() {
   const currURL = window.location.href;
-  if (currURL.includes(FULLURL) && currURL.includes("?courseId=")) {
+  var matchesFull = false;
+  FULLURLS.forEach((ending) => {
+    if (currURL.includes(ending)) matchesFull = true;
+  });
+  // Matches one of any of an arbitrary number of 'full url's (since different pages have default searches
+  if (matchesFull && currURL.includes("?courseId=")) {
     // if this is a long url and there is a course ID, extract it
     const courseId = currURL.split("?courseId=")[1].split("&")[0];
     if (courseId.match(COURSEPATTERN)) {
