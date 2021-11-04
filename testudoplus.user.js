@@ -18,6 +18,9 @@ const DATA = {
   pt: {},
 };
 let ALIAS = {};
+const FULLURL = "&_openSectionsOnly=on&creditCompare=%3E%3D&credits=0.0&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on";
+const DEPTPATTERN = /^([A-Z]{4})$/g;
+const COURSEPATTERN = /([A-Z]{4}[0-9]{3}[A-Z]?)/g;
 
 // add sorting button
 const sortBtn = document.createElement('button');
@@ -289,6 +292,16 @@ function createShareLinks() {
   });
 }
 
+function getTermId(url) {
+  if (url.includes("termId=")) { // for most URLs, this will return the term id
+    return url.split("termId=")[1].split("&")[0];
+  } else if (url.includes("/gen-ed/")) { // the geneds page has the term id after the /gen-ed/ address portion, similar to how individual courses or depts do it
+    return url.split("/gen-ed/")[1].split("/")[0];
+  } else { // if it's another shortlink
+    return url.split("/soc/")[1].split("/")[0];
+  }
+}
+
 // An even more abstract TermID getter, from a url
 function getTermId(url) {
   if (url.includes("termId=")) { // for most URLs, this will return the term id
@@ -314,6 +327,7 @@ function genShareLink(courseId) {
 }
 
 function main() {
+  shortenLongURL();
   loadAliasTable().then(() => {
     // First load
     loadPTData();
@@ -324,27 +338,42 @@ function main() {
   });
 }
 
+// If this is a super long search URL with all default params, replace it with a direct URL if possible
+function shortenLongURL() {
+  const currURL = window.location.href;
+  if (currURL.includes(FULLURL) && currURL.includes("?courseId=")) {
+    // if this is a long url and there is a course ID, extract it
+    const courseId = currURL.split("?courseId=")[1].split("&")[0];
+    if (courseId.match(COURSEPATTERN)) {
+      // if it matches the course pattern, replace it with a course link
+      window.location.replace(genShortLink(courseId.substring(0, 4), courseId));
+    } else if (courseId.match(DEPTPATTERN)) {
+      // if it doesn't match a course pattern, and matches a dept pattern, replace it with a dept link
+      window.location.replace(genShortLink(courseId));
+    }
+  }
+}
+
 function linkifyCourses() {
   const allPrereqs = [...document.querySelectorAll('div.approved-course-text')];
   const allDescs = [...document.querySelectorAll('div.course-text')];
   const allIDs = [...document.querySelectorAll('div.course-id')];
-  const courseReg = /([A-Z]{4}[0-9]{3}[A-Z]?)/g;
 
   allPrereqs.forEach((prereqDiv) => {
     if (prereqDiv.innerHTML.includes("<div>")) {
       Array.from(prereqDiv.children[0].children[0].children).forEach((replace) => {
-      replace.innerHTML = replace.innerHTML.replaceAll(/([A-Z]{4}[0-9]{3}[A-Z]?)/g, linkifyHelper);
+      replace.innerHTML = replace.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
     })} else {
-      prereqDiv.innerHTML = prereqDiv.innerHTML.replaceAll(/([A-Z]{4}[0-9]{3}[A-Z]?)/g, linkifyHelper);
+      prereqDiv.innerHTML = prereqDiv.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
     }
   });
 
   allDescs.forEach((descDiv) => {
-    descDiv.innerHTML = descDiv.innerHTML.replaceAll(courseReg, linkifyHelper);
+    descDiv.innerHTML = descDiv.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
   });
 
   allIDs.forEach((idDiv) => {
-    idDiv.innerHTML = idDiv.innerHTML.replaceAll(courseReg, linkifyHelper);
+    idDiv.innerHTML = idDiv.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
   });
 }
 
