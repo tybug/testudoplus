@@ -299,11 +299,28 @@ function getTermId(url) {
   }
 }
 
-function genShareLink(courseId) {
+// An even more abstract TermID getter, from a url
+function getTermId(url) {
+  if (url.includes("termId=")) { // for most URLs, this will return the term id
+    return url.split("termId=")[1].split("&")[0];
+  } else if (url.includes("/gen-ed/")) { // the geneds page has the term id after the /gen-ed/ address portion, similar to how individual courses or depts do it
+    return url.split("/gen-ed/")[1].split("/")[0];
+  } else { // if it's another shortlink
+    return url.split("/soc/")[1].split("/")[0];
+  }
+}
+
+// A more abstract link generator
+function genShortLink(courseDept, courseId = "") {
   const baseURL = "https://app.testudo.umd.edu/soc";
   const termId = getTermId(window.location.href);
-  let toCopy = baseURL + "/" + termId + "/" + courseId.substring(0, 4) + "/" + courseId;
-  return toCopy;
+  // if courseId is a blank string (default if it's missing), don't include that portion of the link
+  return baseURL + "/" + termId + "/" + courseDept + (courseId === "" ? "" : "/" + courseId);
+}
+
+// Specifically generates course share links
+function genShareLink(courseId) {
+  return genShortLink(courseId.substring(0, 4), courseId);
 }
 
 function main() {
