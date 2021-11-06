@@ -101,13 +101,13 @@ function updateInstructorRating() {
   Array.prototype.map.call(instructorElements, (elem) => {
     const instructorName = getInstructorName(elem);
     if (DATA.rmp[instructorName]) {
-      const oldElem = elem.querySelector('.rmp-rating-box');
+      const oldElem = elem.querySelector('.rmp.rating-box');
       if (oldElem) {
         oldElem.remove();
       }
       const rating = DATA.rmp[instructorName].rating;
       const ratingElem = document.createElement('a');
-      ratingElem.className = 'rmp-rating-box';
+      ratingElem.className = 'rmp rating-box';
       ratingElem.href = rating ? `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${DATA.rmp[instructorName].recordId}` : '';
       ratingElem.title = instructorName;
       ratingElem.target = '_blank';
@@ -227,7 +227,7 @@ function updatePTData() {
     const courseId = courseIdElem.innerText;
     const courseIdContainer = courseIdElem.parentNode;
 
-    const oldElem = courseElem.querySelector('.pt-gpa-box');
+    const oldElem = courseElem.querySelector('.pt.gpa-box');
     if (oldElem) {
       oldElem.remove();
     }
@@ -236,7 +236,7 @@ function updatePTData() {
       const avgGPA = DATA.pt[courseId].avgGPA;
 
       const avgGPAElem = document.createElement('a');
-      avgGPAElem.className = 'pt-gpa-box';
+      avgGPAElem.className = 'pt gpa-box';
       avgGPAElem.href = `https://planetterp.com/course/${courseId}`;
       avgGPAElem.title = courseId;
       avgGPAElem.target = '_blank';
@@ -255,14 +255,14 @@ function updatePTData() {
     Array.prototype.map.call(instructorElemList, (elem) => {
       const instructorName = getInstructorName(elem);
       if (DATA?.pt?.[courseId]?.instructors?.[instructorName]) {
-        const oldElem = elem.querySelector('.pt-rating-box');
+        const oldElem = elem.querySelector('.pt.rating-box');
         if (oldElem) {
           oldElem.remove();
         }
 
         const rating = DATA.pt[courseId].instructors[instructorName].rating;
         const ratingElem = document.createElement('a');
-        ratingElem.className = 'pt-rating-box';
+        ratingElem.className = 'pt rating-box';
         ratingElem.href = rating ? `https://planetterp.com/professor/${DATA.pt[courseId].instructors[instructorName].id}` : '';
         ratingElem.title = instructorName;
         ratingElem.target = '_blank';
@@ -413,28 +413,28 @@ function linkifyHelper(match, offset, string) {
 }
 
 const styleInject = `
-.rmp-rating-box,
-.pt-rating-box {
+.rating-box {
   border-radius: 5px;
   padding: 1px 5px;
   margin-left: 10px;
-  background-color: #FF0266;
   color: #FFFFFF !important;
   font-family: monospace;
 }
-.pt-rating-box {
-  background-color: #009688;
-}
-.pt-gpa-box {
+.gpa-box {
   display: flex;
   justify-content: center;
   text-align: center;
   margin-top: 10px;
   border-radius: 5px;
-  background-color: #009688;
   color: #FFFFFF !important;
   font-family: monospace;
   padding: 1px;
+}
+.rmp {
+  background-clor: #FF0266;
+}
+.pt {
+  background-color: #009688
 }
 .share-course-div {
   display: flex;
@@ -449,7 +449,6 @@ const styleInject = `
 }
 .share-course-div:active {
   transform: scale(0.93);
-
 }
 .share-course-link:hover,
 .share-course-link:active {
