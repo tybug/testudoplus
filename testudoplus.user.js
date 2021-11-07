@@ -24,30 +24,96 @@ const FULLURLS = [
 ];
 const DEPTPATTERN = /^([a-zA-Z]{4})$/g;
 const COURSEPATTERN = /([a-zA-Z]{4}[0-9]{3}[a-zA-Z]?)/g;
-
-// add sorting button
 const sortBtn = document.createElement('button');
-sortBtn.addEventListener('click', function() {
-  sortCourseElements((courseElem, otherCourseElem) => {
-    if (!DATA.pt[courseElem.id] || !DATA.pt[courseElem.id].avgGPA) { return 100; }
-    else if (!DATA.pt[otherCourseElem.id] || !DATA.pt[otherCourseElem.id].avgGPA) { return -100; }
-    else { return DATA.pt[otherCourseElem.id].avgGPA - DATA.pt[courseElem.id].avgGPA; }
-  });
-});
-sortBtn.disabled = true;
-sortBtn.textContent = 'Sort By Average GPA Descending (Loading data, please wait)';
-document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.querySelector('#courses-page'));
-
-// add reset button
 const resetBtn = document.createElement('button');
-resetBtn.style.cssText = "margin-left: 20px;";
-resetBtn.addEventListener('click', function() {
-  sortCourseElements((course1, course2) => course1.id.toLowerCase().localeCompare(course2.id.toLowerCase()));
-});
-resetBtn.textContent = 'Reset Sort';
-document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document.querySelector('#courses-page'));
+
+function main() {
+  shortenLongURL();
+  injectStyle();
+  generateSortButtons();
+  loadAliasTable().then(() => {
+    // First load
+    loadPTData();
+    loadRateData();
+  });
+  createShareLinks();
+  linkifyCourses();
+}
+
+// ---------- Link Creation Methods ---------- //
+
+// Specifically generates course share links
+function genShareLink(courseId) {
+  return genShortLink(courseId.substring(0, 4), courseId);
+}
+
+// A more abstract link generator
+function genShortLink(courseDept, courseId = "") {
+  const baseURL = "https://app.testudo.umd.edu/soc";
+  const termId = getTermId(window.location.href);
+  // if courseId is a blank string (default if it's missing), don't include that portion of the link
+  return baseURL + "/" + termId + "/" + courseDept.toUpperCase() + (courseId === "" ? "" : "/" + courseId).toUpperCase();
+}
+
+// An even more abstract TermID getter, from a url
+function getTermId(url) {
+  if (url.includes("termId=")) { // for most URLs, this will return the term id
+    return url.split("termId=")[1].split("&")[0];
+  } else if (url.includes("/gen-ed/")) { // the geneds page has the term id after the /gen-ed/ address portion, similar to how individual courses or depts do it
+    return url.split("/gen-ed/")[1].split("/")[0];
+  } else { // if it's another shortlink
+    return url.split("/soc/")[1].split("/")[0];
+  }
+}
+
+// ---------- Normal Methods ---------- //
+
+// If this is a super long search URL with all default params, replace it with a direct URL if possible
+function shortenLongURL() {
+  const currURL = window.location.href;
+  var matchesFull = false;
+  FULLURLS.forEach((ending) => {
+    if (currURL.includes(ending)) matchesFull = true;
+  });
+  // matches one of any of an arbitrary number of 'full url's (since different pages have default searches
+  if (matchesFull && currURL.includes("?courseId=")) {
+    // if this is a long url and there is a course ID, extract it
+    const courseId = currURL.split("?courseId=")[1].split("&")[0];
+    if (courseId.match(COURSEPATTERN)) {
+      // if it matches the course pattern, replace it with a course link
+      window.location.replace(genShortLink(courseId.substring(0, 4), courseId));
+    } else if (courseId.match(DEPTPATTERN)) {
+      // if it doesn't match a course pattern, and matches a dept pattern, replace it with a dept link
+      window.location.replace(genShortLink(courseId));
+    }
+  }
+}
+
+// Generates and inserts the course sort buttons
+function generateSortButtons() {
+  // add GPA sort button
+  sortBtn.addEventListener('click', function() {
+    sortCourseElements((courseElem, otherCourseElem) => {
+      if (!DATA.pt[courseElem.id] || !DATA.pt[courseElem.id].avgGPA) { return 100; }
+      else if (!DATA.pt[otherCourseElem.id] || !DATA.pt[otherCourseElem.id].avgGPA) { return -100; }
+      else { return DATA.pt[otherCourseElem.id].avgGPA - DATA.pt[courseElem.id].avgGPA; }
+    });
+  });
+  sortBtn.disabled = true;
+  sortBtn.textContent = 'Sort By Average GPA Descending (Loading data, please wait)';
+  document.querySelector('#content-wrapper > div').insertBefore(sortBtn, document.querySelector('#courses-page'));
+
+  // add reset (course title) sort button
+  resetBtn.style.cssText = "margin-left: 20px;";
+  resetBtn.addEventListener('click', function() {
+    sortCourseElements((course1, course2) => course1.id.toLowerCase().localeCompare(course2.id.toLowerCase()));
+  });
+  resetBtn.textContent = 'Reset Sort';
+  document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document.querySelector('#courses-page'));
+}
 
 // A generic course sorting function. If there are multiple department headers, it will remove them all
+// Takes a comparison function as a parameter
 function sortCourseElements(sorter) {
   const coursesContainer = document.querySelector(".courses-container");
   const allCourses = [...document.querySelectorAll("div.course")];
@@ -71,6 +137,76 @@ function sortCourseElements(sorter) {
     headerList.forEach(e => e.remove());
   }
 }
+
+// Generates the share link button under each course
+function createShareLinks() {
+  const courseElements = document.querySelectorAll(".course");
+
+  // local function to handle the copy link action
+  function copyLink(courseId) {
+    // In order to copy text to the clipboard, it has to be taken from another element
+    // Therefore, create a new textarea element with the course link, put it into the document, copy its contents, and delete it
+    const copyfield = document.createElement("textarea");
+    copyfield.value = genShareLink(courseId);
+    document.body.appendChild(copyfield);
+    copyfield.select();
+    document.execCommand("copy");
+    document.body.removeChild(copyfield);
+  };
+
+  courseElements.forEach((courseElem) => {
+    // uses a div and an a element to provide the button "click" functionality
+    const shareLink = document.createElement("a");
+    shareLink.className = "share-course-link";
+    shareLink.innerText = "Share";
+    shareLink.title = "Copy Course Link\n" + genShareLink(courseElem.id);
+
+    const shareDiv = document.createElement("div");
+    shareDiv.className = "share-course-div";
+    shareDiv.setAttribute("data-tooltip", "click to copy");
+    shareDiv.appendChild(shareLink);
+    shareDiv.addEventListener("click", function(e) {
+      copyLink(courseElem.id);
+    });
+    courseElem.querySelector(".course-id-container").appendChild(shareDiv);
+  });
+}
+
+// For course descriptions and titles, automatically replace any course pattern match with a link to that course (assumes the course is valid)
+// A 'course pattern match' is as follows: [4 letters][3 numbers] OR [4 letters][3 numbers][1 letter]
+function linkifyCourses() {
+  // this is the prerequisites, restrictions, 'credit only granted for', and formerly sections
+  // this can be nested divs, which will will cause changes you'll see later in the method
+  const allPrereqs = [...document.querySelectorAll('div.approved-course-text')];
+  // this is the long paragraph description, and it's just plain text
+  const allDescs = [...document.querySelectorAll('div.course-text')];
+  // this is the course ids/titles in the top left of each course section
+  const allIDs = [...document.querySelectorAll('div.course-id')];
+
+  // since the prereqs section can have nested divs, each potential subdiv is processed separately
+  allPrereqs.forEach((prereqDiv) => {
+    // if there are nested divs, there are 3 layers of divs exactly. run the match on all of them
+    if (prereqDiv.innerHTML.includes("<div>")) {
+      Array.from(prereqDiv.children[0].children[0].children).forEach((replace) => {
+      replace.innerHTML = replace.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
+    })} else { // otherwise, just run it on the already given div
+      prereqDiv.innerHTML = prereqDiv.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
+    }
+  });
+
+  // these both get processed the same way, so just merge the arrays and replace matches
+  [...allDescs, ...allIDs].forEach((toLinkify) => {
+    toLinkify.innerHTML = toLinkify.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
+  });
+}
+
+// This function exists almost solely because the parameters have to match certain strings in order to work with replaceAll
+// It does also help to make the <a> element
+function linkifyHelper(match, offset, string) {
+  return '<a class="linkified-course" href=' + genShareLink(match) + ">" + match + "</a>";
+}
+
+// ---------- API Accessing ---------- //
 
 function loadAliasTable() {
   return new Promise((resolve) => {
@@ -97,7 +233,7 @@ function getInstructorName(elem) {
 }
 
 function updateInstructorRating() {
-  const instructorElements = unsafeWindow.document.querySelectorAll('.section-instructor');
+  const instructorElements = document.querySelectorAll('.section-instructor');
   Array.prototype.map.call(instructorElements, (elem) => {
     const instructorName = getInstructorName(elem);
     if (DATA.rmp[instructorName]) {
@@ -155,7 +291,7 @@ function getInstructor(name) {
 }
 
 function loadRateData() {
-  const instructorElements = unsafeWindow.document.querySelectorAll('.section-instructor');
+const instructorElements = document.querySelectorAll('.section-instructor');
   Array.prototype.map.call(instructorElements, (elem) => {
     const instructorName = getInstructorName(elem);
     if (!DATA.rmp[instructorName]) {
@@ -174,6 +310,20 @@ function loadRateData() {
   });
 }
 
+async function getPTCourseData(courseId) {
+  var courseSchema;
+  try {
+    courseSchema = await planetterpAPI("course", {name: courseId});
+  } catch (error) {
+    console.error(error);
+    courseSchema = { "professors" : [], "average_gpa" : null };
+  }
+  const courseData = {
+      courseId,
+      instructors: {},
+      avgGPA: courseSchema.average_gpa
+  };
+
 async function planetterpAPI(endpoint, parameters) {
   const params = new URLSearchParams(parameters).toString()
   const response = await fetch(`https://api.planetterp.com/v1/${endpoint}?${params}`, {
@@ -185,20 +335,6 @@ async function planetterpAPI(endpoint, parameters) {
   if (response.status != 200) throw new Error("ERROR: " + endpoint + " request failed. Parameters: " + JSON.stringify(parameters));
   return response.json();
 }
-
-async function getPTCourseData(courseId) {
-  var courseSchema;
-  try {
-    courseSchema = await planetterpAPI("course", {name: courseId});
-  } catch (error) {
-    console.error(error);
-    courseSchema = {"professors":[],"average_gpa":null};
-  }
-  const courseData = {
-      courseId,
-      instructors: {},
-      avgGPA: courseSchema.average_gpa
-  };
 
   // TODO lump this and the next set of promises together so they can all happen asyncly, we don't care
   // what order they happen in, just that they all finish before this function returns
@@ -302,194 +438,86 @@ async function loadPTData() {
   }));
 }
 
-function createShareLinks() {
-  const courseElements = unsafeWindow.document.querySelectorAll('.course');
-  const copyLink = courseId => {
-    const copyfield = document.createElement('textarea');
-    copyfield.value = genShareLink(courseId);
-    document.body.appendChild(copyfield);
-    copyfield.select();
-    document.execCommand('copy');
-    document.body.removeChild(copyfield);
-  };
-  Array.prototype.map.call(courseElements, (elem) => {
-    const shareDiv = document.createElement('div');
-    shareDiv.className = 'share-course-div';
-    shareDiv.setAttribute("data-tooltip", "click to copy");
-    const shareLink = document.createElement('a');
-    shareLink.className = 'share-course-link';
-    shareLink.innerText = "Share";
-    shareLink.title = "Copy Course Link\n" + genShareLink(elem.id);
-    shareDiv.appendChild(shareLink);
-    shareDiv.addEventListener('click', function(e) {
-      copyLink(elem.id);
-    });
-    elem.querySelector('.course-id-container').appendChild(shareDiv);
-  });
-}
+// ---------- Misc stuff and main call ---------- //
 
-// An even more abstract TermID getter, from a url
-function getTermId(url) {
-  if (url.includes("termId=")) { // for most URLs, this will return the term id
-    return url.split("termId=")[1].split("&")[0];
-  } else if (url.includes("/gen-ed/")) { // the geneds page has the term id after the /gen-ed/ address portion, similar to how individual courses or depts do it
-    return url.split("/gen-ed/")[1].split("/")[0];
-  } else { // if it's another shortlink
-    return url.split("/soc/")[1].split("/")[0];
+// Adds custom styles to the document
+function injectStyle() {
+  const styleInject = `
+  .rating-box {
+    border-radius: 5px;
+    padding: 1px 5px;
+    margin-left: 10px;
+    color: #FFFFFF !important;
+    font-family: monospace;
   }
-}
-
-// A more abstract link generator
-function genShortLink(courseDept, courseId = "") {
-  const baseURL = "https://app.testudo.umd.edu/soc";
-  const termId = getTermId(window.location.href);
-  // if courseId is a blank string (default if it's missing), don't include that portion of the link
-  return baseURL + "/" + termId + "/" + courseDept.toUpperCase() + (courseId === "" ? "" : "/" + courseId).toUpperCase();
-}
-
-// Specifically generates course share links
-function genShareLink(courseId) {
-  return genShortLink(courseId.substring(0, 4), courseId);
-}
-
-function main() {
-  shortenLongURL();
-  loadAliasTable().then(() => {
-    // First load
-    loadPTData();
-    loadRateData();
-    createShareLinks();
-    // Linkify all courses in descriptions
-    linkifyCourses();
-  });
-}
-
-// If this is a super long search URL with all default params, replace it with a direct URL if possible
-function shortenLongURL() {
-  const currURL = window.location.href;
-  var matchesFull = false;
-  FULLURLS.forEach((ending) => {
-    if (currURL.includes(ending)) matchesFull = true;
-  });
-  // Matches one of any of an arbitrary number of 'full url's (since different pages have default searches
-  if (matchesFull && currURL.includes("?courseId=")) {
-    // if this is a long url and there is a course ID, extract it
-    const courseId = currURL.split("?courseId=")[1].split("&")[0];
-    if (courseId.match(COURSEPATTERN)) {
-      // if it matches the course pattern, replace it with a course link
-      window.location.replace(genShortLink(courseId.substring(0, 4), courseId));
-    } else if (courseId.match(DEPTPATTERN)) {
-      // if it doesn't match a course pattern, and matches a dept pattern, replace it with a dept link
-      window.location.replace(genShortLink(courseId));
-    }
+  .gpa-box {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    margin-top: 10px;
+    border-radius: 5px;
+    color: #FFFFFF !important;
+    font-family: monospace;
+    padding: 1px;
   }
-}
+  .rmp {
+    background-clor: #FF0266;
+  }
+  .pt {
+    background-color: #009688
+  }
+  .share-course-div {
+    display: flex;
+    justify-content: center;
+    border-radius: 5px;
+    padding: 1px;
+    margin-top: 10px;
+    background-color: #8E1515;
+    color: #FFFFFF !important;
+    font-family: monospace;
+    cursor: pointer;
+  }
+  .share-course-div:active {
+    transform: scale(0.93);
+  }
+  .share-course-link:hover,
+  .share-course-link:active {
+    text-decoration: none;
+  }
+  .linkified-course:hover {
+    text-decoration: underline;
+  }
+  /* fancy tooltip stolen from https://stackoverflow.com/a/25813336, god bless him */
+  [data-tooltip]:before {
+    /* needed - do not touch */
+    content: attr(data-tooltip);
+    position: absolute;
+    opacity: 0;
 
-function linkifyCourses() {
-  const allPrereqs = [...document.querySelectorAll('div.approved-course-text')];
-  const allDescs = [...document.querySelectorAll('div.course-text')];
-  const allIDs = [...document.querySelectorAll('div.course-id')];
+    /* customizable */
+    padding: 7px;
+    color: white;
+    border-radius: 5px;
+    width: 110px;
+    z-index: 10;
+  }
+  [data-tooltip]:hover:before {
+    /* needed - do not touch */
+    opacity: 1;
 
-  allPrereqs.forEach((prereqDiv) => {
-    if (prereqDiv.innerHTML.includes("<div>")) {
-      Array.from(prereqDiv.children[0].children[0].children).forEach((replace) => {
-      replace.innerHTML = replace.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
-    })} else {
-      prereqDiv.innerHTML = prereqDiv.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
-    }
-  });
-
-  allDescs.forEach((descDiv) => {
-    descDiv.innerHTML = descDiv.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
-  });
-
-  allIDs.forEach((idDiv) => {
-    idDiv.innerHTML = idDiv.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
-  });
+    /* customizable */
+    background: black;
+    margin-top: -40px;
+    margin-left: 10px;
+  }
+  [data-tooltip]:not([data-tooltip-persistent]):before {
+    pointer-events: none;
+  }
+  `;
+  const styleInjectElem = document.createElement('style');
+  styleInjectElem.id = 'testudoplus-style-inject';
+  styleInjectElem.innerHTML = styleInject;
+  document.head.appendChild(styleInjectElem);
 }
-
-function linkifyHelper(match, offset, string) {
-  return '<a class="linkified-course" href=' + genShareLink(match) + ">" + match + "</a>";
-}
-
-const styleInject = `
-.rating-box {
-  border-radius: 5px;
-  padding: 1px 5px;
-  margin-left: 10px;
-  color: #FFFFFF !important;
-  font-family: monospace;
-}
-.gpa-box {
-  display: flex;
-  justify-content: center;
-  text-align: center;
-  margin-top: 10px;
-  border-radius: 5px;
-  color: #FFFFFF !important;
-  font-family: monospace;
-  padding: 1px;
-}
-.rmp {
-  background-clor: #FF0266;
-}
-.pt {
-  background-color: #009688
-}
-.share-course-div {
-  display: flex;
-  justify-content: center;
-  border-radius: 5px;
-  padding: 1px;
-  margin-top: 10px;
-  background-color: #8E1515;
-  color: #FFFFFF !important;
-  font-family: monospace;
-  cursor: pointer;
-}
-.share-course-div:active {
-  transform: scale(0.93);
-}
-.share-course-link:hover,
-.share-course-link:active {
-  text-decoration: none;
-}
-.linkified-course:hover {
-  text-decoration: underline;
-}
-
-/* fancy tooltip stolen from https://stackoverflow.com/a/25813336, god bless him */
-[data-tooltip]:before {
-  /* needed - do not touch */
-  content: attr(data-tooltip);
-  position: absolute;
-  opacity: 0;
-
-  /* customizable */
-  padding: 7px;
-  color: white;
-  border-radius: 5px;
-  width: 110px;
-  z-index: 10;
-}
-
-[data-tooltip]:hover:before {
-  /* needed - do not touch */
-  opacity: 1;
-
-  /* customizable */
-  background: black;
-  margin-top: -40px;
-  margin-left: 10px;
-}
-
-[data-tooltip]:not([data-tooltip-persistent]):before {
-  pointer-events: none;
-}
-`;
-const styleInjectElem = document.createElement('style');
-styleInjectElem.id = 'umd-rmp-style-inject';
-styleInjectElem.innerHTML = styleInject;
-document.head.appendChild(styleInjectElem);
 
 main();
