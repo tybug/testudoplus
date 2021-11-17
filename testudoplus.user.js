@@ -8,7 +8,7 @@
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-start
-// @version     0.1.9
+// @version     0.1.10
 // @description Improve the Testudo Schedule of Classes
 // @namespace   tybug
 // ==/UserScript==
@@ -466,7 +466,7 @@ function injectStyle() {
     padding: 1px;
   }
   .rmp {
-    background-clor: #FF0266;
+    background-color: #FF0266;
   }
   .pt {
     background-color: #009688
