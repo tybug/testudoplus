@@ -4,11 +4,11 @@
 // @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    11/4/2021
+// @modified    11/17/2021
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-end
-// @version     0.1.8
+// @version     0.1.9
 // @description Improve the Testudo Schedule of Classes
 // @namespace   tybug
 // ==/UserScript==
