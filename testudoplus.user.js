@@ -7,7 +7,7 @@
 // @modified    11/17/2021
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
-// @run-at      document-end
+// @run-at      document-start
 // @version     0.1.9
 // @description Improve the Testudo Schedule of Classes
 // @namespace   tybug
@@ -27,8 +27,13 @@ const COURSEPATTERN = /([a-zA-Z]{4}[0-9]{3}[a-zA-Z]?)/g;
 const sortBtn = document.createElement('button');
 const resetBtn = document.createElement('button');
 
-function main() {
-  // shortenLongURL();
+// Runs before DOM content is loaded to handle URL shortening without refreshing page
+function preDOMMain() {
+  shortenLongURL();
+}
+
+// Runs after DOM content is loaded so everything else runs at the proper time
+function postDOMMain() {
   injectStyle();
   generateSortButtons();
   loadAliasTable().then(() => {
@@ -520,4 +525,6 @@ function injectStyle() {
   document.head.appendChild(styleInjectElem);
 }
 
-main();
+preDOMMain();
+// https://stackoverflow.com/a/26269087
+document.addEventListener ("DOMContentLoaded", postDOMMain);
