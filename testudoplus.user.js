@@ -28,7 +28,7 @@ const sortBtn = document.createElement('button');
 const resetBtn = document.createElement('button');
 
 function main() {
-  shortenLongURL();
+  // shortenLongURL();
   injectStyle();
   generateSortButtons();
   loadAliasTable().then(() => {
