@@ -4,7 +4,7 @@
 // @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    11/17/2021
+// @modified    1/16/2022
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-start
@@ -26,6 +26,7 @@ const DEPTPATTERN = /^([a-zA-Z]{4})$/g;
 const COURSEPATTERN = /([a-zA-Z]{4}[0-9]{3}[a-zA-Z]?)/g;
 const sortBtn = document.createElement('button');
 const resetBtn = document.createElement('button');
+const reloadRatingsBtn = document.createElement('button');
 
 // Runs before DOM content is loaded to handle URL shortening without refreshing page
 function preDOMMain() {
@@ -35,7 +36,7 @@ function preDOMMain() {
 // Runs after DOM content is loaded so everything else runs at the proper time
 function postDOMMain() {
   injectStyle();
-  generateSortButtons();
+  generateButtons();
   loadAliasTable().then(() => {
     // First load
     loadPTData();
@@ -95,7 +96,7 @@ function shortenLongURL() {
 }
 
 // Generates and inserts the course sort buttons
-function generateSortButtons() {
+function generateButtons() {
   // add GPA sort button
   sortBtn.addEventListener('click', function() {
     sortCourseElements((courseElem, otherCourseElem) => {
@@ -115,6 +116,17 @@ function generateSortButtons() {
   });
   resetBtn.textContent = 'Reset Sort';
   document.querySelector('#content-wrapper > div').insertBefore(resetBtn, document.querySelector('#courses-page'));
+
+  // add pt reload button
+  reloadRatingsBtn.style.cssText = "margin-left: 20px;";
+  reloadRatingsBtn.addEventListener('click', function() {
+      loadAliasTable().then(() => {
+          loadPTData();
+          loadRateData();
+      });
+  });
+  reloadRatingsBtn.textContent = 'Reload Ratings';
+  document.querySelector('#content-wrapper > div').insertBefore(reloadRatingsBtn, document.querySelector('#courses-page'));
 }
 
 // A generic course sorting function. If there are multiple department headers, it will remove them all
