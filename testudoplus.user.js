@@ -8,7 +8,7 @@
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-start
-// @version     0.1.10
+// @version     0.1.11
 // @description Improve the Testudo Schedule of Classes
 // @namespace   tybug
 // ==/UserScript==
