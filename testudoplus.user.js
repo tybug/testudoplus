@@ -44,6 +44,7 @@ function postDOMMain() {
   });
   createShareLinks();
   linkifyCourses();
+  createSectionObserver();
 }
 
 // ---------- Link Creation Methods ---------- //
@@ -221,6 +222,22 @@ function linkifyCourses() {
 // It does also help to make the <a> element
 function linkifyHelper(match, offset, string) {
   return '<a class="linkified-course" href=' + genShareLink(match) + ">" + match + "</a>";
+}
+
+// This function adds a MutationObserver to the courses-page upper div, looking for sections-container divs to be created
+// If it sees one of those created, it reloads the rating boxes
+function createSectionObserver() {
+  const coursesDiv = document.querySelector("#courses-page");
+  const obs = new MutationObserver(function (mutations, self) {
+    for (const mutation of mutations) {
+      if (mutation.type === "childList" && mutation.target.querySelector(".sections-container") != null) {
+        loadPTData();
+        loadRateData();
+      }
+    }
+  });
+
+  obs.observe(coursesDiv, { childList: true, subtree: true });
 }
 
 // ---------- API Accessing ---------- //
