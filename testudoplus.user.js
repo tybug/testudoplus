@@ -278,7 +278,12 @@ function updateInstructorRating() {
       const rating = DATA.rmp[instructorName].rating;
       const ratingElem = document.createElement('a');
       ratingElem.className = 'rmp rating-box';
-      ratingElem.href = rating ? `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${DATA.rmp[instructorName].recordId}` : '';
+      if (DATA.rmp[instructorName].recordId) {
+        ratingElem.href = `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${DATA.rmp[instructorName].recordId}`;
+      } else {
+        // don't underline on hover if there's no link to click
+        ratingElem.className += ' no-underline'
+      }
       ratingElem.title = instructorName;
       ratingElem.target = '_blank';
       ratingElem.innerText = rating ? rating.toFixed(1) : 'N/A';
@@ -430,10 +435,15 @@ function updatePTData() {
           oldElem.remove();
         }
 
-        const rating = DATA.pt[courseId].instructors[instructorName].rating;
+        const instructor = DATA.pt[courseId].instructors[instructorName]
+        const rating = instructor.rating;
         const ratingElem = document.createElement('a');
         ratingElem.className = 'pt rating-box';
-        ratingElem.href = rating ? `https://planetterp.com/professor/${DATA.pt[courseId].instructors[instructorName].id}` : '';
+        if (instructor.id) {
+          ratingElem.href = `https://planetterp.com/professor/${instructor.id}`;
+        } else {
+          ratingElem.className += ' no-underline'
+        }
         ratingElem.title = instructorName;
         ratingElem.target = '_blank';
         ratingElem.innerText = rating ? rating.toFixed(2) : 'N/A';
@@ -483,6 +493,9 @@ function injectStyle() {
     margin-left: 10px;
     color: #FFFFFF !important;
     font-family: monospace;
+  }
+  .no-underline:hover {
+    text-decoration: none;
   }
   .gpa-box {
     display: flex;
