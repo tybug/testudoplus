@@ -23,7 +23,7 @@ const FULLURLS = [
   "&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on"
 ];
 const DEPTPATTERN = /^([a-zA-Z]{4})$/g;
-const COURSEPATTERN = /([a-zA-Z]{4}[0-9]{3}[a-zA-Z]?)/g;
+const COURSEPATTERN = /((?!Fall)[a-zA-Z]{4}[0-9]{3}[a-zA-Z]?)/g;
 const sortBtn = document.createElement('button');
 const resetBtn = document.createElement('button');
 const reloadRatingsBtn = document.createElement('button');
