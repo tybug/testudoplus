@@ -365,7 +365,7 @@ async function getPTCourseData(courseId) {
 
 async function planetterpAPI(endpoint, parameters) {
   const params = new URLSearchParams(parameters).toString()
-  const response = await fetch(`https://api.planetterp.com/v1/${endpoint}?${params}`, {
+  const response = await fetch(`https://planetterp.com/api/v1/${endpoint}?${params}`, {
     method: "GET",
     headers: {
       Accept: "application/json"
