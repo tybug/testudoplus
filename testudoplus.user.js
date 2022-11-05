@@ -4,11 +4,11 @@
 // @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    1/16/2022
+// @modified    11/05/2022
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-start
-// @version     0.1.11
+// @version     0.1.12
 // @description Improve the Testudo Schedule of Classes
 // @namespace   tybug
 // ==/UserScript==
@@ -22,11 +22,14 @@ const FULLURLS = [
   "&_openSectionsOnly=on&creditCompare=%3E%3D&credits=0.0&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on",
   "&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on"
 ];
-const DEPTPATTERN = /^([a-zA-Z]{4})$/g;
+// This is basically just for pattern matching partial courses/departments
+const CDPATTERN = /^([a-zA-Z]{4})([0-9]{1,3}|(?:[0-9]{3}[a-zA-Z]?))?$/g;
 const COURSEPATTERN = /((?!Fall)[a-zA-Z]{4}[0-9]{3}[a-zA-Z]?)/g;
 const sortBtn = document.createElement('button');
 const resetBtn = document.createElement('button');
 const reloadRatingsBtn = document.createElement('button');
+const lastSemBtn = document.createElement('button');
+const nextSemBtn = document.createElement('button');
 
 // Runs before DOM content is loaded to handle URL shortening without refreshing page
 function preDOMMain() {
@@ -55,11 +58,10 @@ function genShareLink(courseId) {
 }
 
 // A more abstract link generator
-function genShortLink(courseDept, courseId = "") {
+function genShortLink(courseDept, courseId, termId = getTermId(window.location.href)) {
   const baseURL = "https://app.testudo.umd.edu/soc";
-  const termId = getTermId(window.location.href);
-  // if courseId is a blank string (default if it's missing), don't include that portion of the link
-  return baseURL + "/" + termId + "/" + courseDept.toUpperCase() + (courseId === "" ? "" : "/" + courseId).toUpperCase();
+  // if courseId is the same as coursedept, don't include that portion of the link
+  return baseURL + "/" + termId + "/" + courseDept.toUpperCase() + (courseId == courseDept ? "" : "/" + courseId).toUpperCase();
 }
 
 // An even more abstract TermID getter, from a url
@@ -73,25 +75,49 @@ function getTermId(url) {
   }
 }
 
+// Two functions to increment and decrement to the next termids, counting only fall and spring, and substitute them into given URLs
+function diffTerm(term = getTermId(window.location.href), diff = 0) {
+  let year = Number(term.substring(0, 4));
+  const mon = term.substring(4, 6);
+  year += Math.floor(diff / 2);
+  switch (diff % 2) {
+    case 1: if (mon == "08") {
+        return (year + 1) + "01";
+      } else {
+        return year + "08";
+      }
+    case 0: return year + mon;
+    case -1: if (mon == "08") {
+      return (year + 1) + "01";
+    } else {
+      return year + "08";
+    }
+  }
+}
+
+function diffTermURL(url, diff) {
+  return url.replace(getTermId(url), diffTerm(getTermId(url), diff));
+}
+
 // ---------- Normal Methods ---------- //
 
 // If this is a super long search URL with all default params, replace it with a direct URL if possible
 function shortenLongURL() {
   const currURL = window.location.href;
-  var matchesFull = false;
+  let matchesFull = false;
   FULLURLS.forEach((ending) => {
     if (currURL.includes(ending)) matchesFull = true;
   });
-  // matches one of any of an arbitrary number of 'full url's (since different pages have default searches
-  if (matchesFull && currURL.includes("?courseId=")) {
-    // if this is a long url and there is a course ID, extract it
-    const courseId = currURL.split("?courseId=")[1].split("&")[0];
-    if (courseId.match(COURSEPATTERN)) {
+  // Matches one of any of an arbitrary number of 'full url's (since different pages have default searches
+  const params = new URLSearchParams(window.location.search);
+  if (matchesFull && params.has("courseId")) {
+    console.log(params.get("courseId"));
+    // If this is a long url and there is a course ID, extract it
+    const match = [...params.get("courseId").matchAll(CDPATTERN)][0];
+    if (typeof match !== undefined) {
+      // Should successfully generate a short link for either a department (1 capture group) or course/course partial (2 cap groups)
       // if it matches the course pattern, replace it with a course link
-      window.location.replace(genShortLink(courseId.substring(0, 4), courseId));
-    } else if (courseId.match(DEPTPATTERN)) {
-      // if it doesn't match a course pattern, and matches a dept pattern, replace it with a dept link
-      window.location.replace(genShortLink(courseId));
+      window.location.replace(genShortLink(match[1], match[0]));
     }
   }
 }
@@ -128,6 +154,21 @@ function generateButtons() {
   });
   reloadRatingsBtn.textContent = 'Reload Ratings';
   document.querySelector('#content-wrapper > div').insertBefore(reloadRatingsBtn, document.querySelector('#courses-page'));
+  
+  // add last and next semester buttons
+  lastSemBtn.style.cssText = "margin-left: 20px;";
+  lastSemBtn.addEventListener("click", function() {
+    window.location.replace(diffTermURL(window.location.href, -1));
+  })
+  lastSemBtn.textContent = "View Last Semester";
+  document.querySelector('#content-wrapper > div').insertBefore(lastSemBtn, document.querySelector('#courses-page'));
+
+  nextSemBtn.style.cssText = "margin-left: 20px;";
+  nextSemBtn.addEventListener("click", function() {
+    window.location.replace(diffTermURL(window.location.href, 1));
+  })
+  nextSemBtn.textContent = "View Next Semester";
+  document.querySelector('#content-wrapper > div').insertBefore(nextSemBtn, document.querySelector('#courses-page'));
 }
 
 // A generic course sorting function. If there are multiple department headers, it will remove them all
@@ -160,16 +201,14 @@ function sortCourseElements(sorter) {
 function createShareLinks() {
   const courseElements = document.querySelectorAll(".course");
 
-  // local function to handle the copy link action
+  // Local function to handle the copy link action
   function copyLink(courseId) {
-    // In order to copy text to the clipboard, it has to be taken from another element
-    // Therefore, create a new textarea element with the course link, put it into the document, copy its contents, and delete it
-    const copyfield = document.createElement("textarea");
-    copyfield.value = genShareLink(courseId);
-    document.body.appendChild(copyfield);
-    copyfield.select();
-    document.execCommand("copy");
-    document.body.removeChild(copyfield);
+    const link = genShareLink(courseId);
+    if (Clipboard && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link);
+    } else {
+      alert("Error - Your browser does not support pages editing your clipboard!\nPlease copy this direct link:\n" + link);
+    }
   };
 
   courseElements.forEach((courseElem) => {
@@ -181,7 +220,7 @@ function createShareLinks() {
 
     const shareDiv = document.createElement("div");
     shareDiv.className = "share-course-div";
-    shareDiv.setAttribute("data-tooltip", "click to copy");
+    shareDiv.setAttribute("data-tooltip", "Click to Copy");
     shareDiv.appendChild(shareLink);
     shareDiv.addEventListener("click", function(e) {
       copyLink(courseElem.id);
@@ -191,37 +230,31 @@ function createShareLinks() {
 }
 
 // For course descriptions and titles, automatically replace any course pattern match with a link to that course (assumes the course is valid)
-// A 'course pattern match' is as follows: [4 letters][3 numbers] OR [4 letters][3 numbers][1 letter]
+// A 'course pattern match' is as follows: [4 letters][1-3 numbers] OR [4 letters][3 numbers][1 letter]
 function linkifyCourses() {
-  // this is the prerequisites, restrictions, 'credit only granted for', and formerly sections
-  // this can be nested divs, which will will cause changes you'll see later in the method
-  const allPrereqs = [...document.querySelectorAll('div.approved-course-text')];
-  // this is the long paragraph description, and it's just plain text
-  const allDescs = [...document.querySelectorAll('div.course-text')];
-  // this is the course ids/titles in the top left of each course section
-  const allIDs = [...document.querySelectorAll('div.course-id')];
+  // This is the prerequisites, restrictions, 'credit only granted for', and formerly sections
+  // This can be nested divs, which will be handled later in the function
+  const allCourseTexts = [...document.querySelectorAll("div.approved-course-text")];
+  // This is the long paragraph description, and it's just plain text
+  const allDescs = [...document.querySelectorAll("div.course-text")];
+  // This is the course ids/titles in the top left of each course section
+  const allIDs = [...document.querySelectorAll("div.course-id")];
 
-  // since the prereqs section can have nested divs, each potential subdiv is processed separately
-  allPrereqs.forEach((prereqDiv) => {
-    // if there are nested divs, there are 3 layers of divs exactly. run the match on all of them
-    if (prereqDiv.innerHTML.includes("<div>")) {
-      Array.from(prereqDiv.children[0].children[0].children).forEach((replace) => {
-      replace.innerHTML = replace.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
-    })} else { // otherwise, just run it on the already given div
-      prereqDiv.innerHTML = prereqDiv.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
+  // Since the CourseTexts section can have nested divs, each potential subdiv needs to be added to the process list
+  let allInnerCTs = [];
+  allCourseTexts.forEach((ctDiv) => {
+    // If there are nested divs, there are 3 layers of divs exactly; collect all of them
+    if (ctDiv.innerHTML.includes("<div>")) {
+      allInnerCTs.push(...Array.from(ctDiv.children[0].children[0].children));
+    } else { // Otherwise, just collect the top level div
+      allInnerCTs.push(ctDiv);
     }
   });
-
-  // these both get processed the same way, so just merge the arrays and replace matches
-  [...allDescs, ...allIDs].forEach((toLinkify) => {
-    toLinkify.innerHTML = toLinkify.innerHTML.replaceAll(COURSEPATTERN, linkifyHelper);
+  // Then, combine all the arrays that need to be processed and run the match on all of them
+  [...allInnerCTs, ...allDescs, ...allIDs].forEach((toLinkify) => {
+    toLinkify.innerHTML = toLinkify.innerHTML.replaceAll(COURSEPATTERN,
+      match => `<a class="linkified-course" href=${genShareLink(match)}>${match}</a>`);
   });
-}
-
-// This function exists almost solely because the parameters have to match certain strings in order to work with replaceAll
-// It does also help to make the <a> element
-function linkifyHelper(match, offset, string) {
-  return '<a class="linkified-course" href=' + genShareLink(match) + ">" + match + "</a>";
 }
 
 // This function adds a MutationObserver to the courses-page upper div, looking for sections-container divs to be created
@@ -413,6 +446,7 @@ function updatePTData() {
       const avgGPAElem = document.createElement('a');
       avgGPAElem.className = 'pt gpa-box';
       avgGPAElem.href = `https://planetterp.com/course/${courseId}`;
+      avgGPAElem.setAttribute('data-tooltip', 'Open in PlanetTerp')
       avgGPAElem.title = courseId;
       avgGPAElem.target = '_blank';
       avgGPAElem.innerText = avgGPA ? `AVG GPA ${avgGPA.toFixed(2)}` : 'N/A';
@@ -542,7 +576,7 @@ function injectStyle() {
     opacity: 0;
 
     /* customizable */
-    padding: 7px;
+    padding: 5px;
     color: white;
     border-radius: 5px;
     width: 110px;
@@ -553,7 +587,7 @@ function injectStyle() {
     opacity: 1;
 
     /* customizable */
-    background: black;
+    background: rgba(0, 0, 0, 0.75);
     margin-top: -40px;
     margin-left: 10px;
   }
@@ -568,5 +602,4 @@ function injectStyle() {
 }
 
 preDOMMain();
-// https://stackoverflow.com/a/26269087
-document.addEventListener ("DOMContentLoaded", postDOMMain);
+window.onload = postDOMMain
