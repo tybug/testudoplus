@@ -4,11 +4,11 @@
 // @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    11/05/2022
+// @modified    02/27/2023
 // @include     https://app.testudo.umd.edu/soc/*
 // @grant       GM_xmlhttpRequest
 // @run-at      document-start
-// @version     0.1.12
+// @version     0.1.13
 // @description Improve the Testudo Schedule of Classes
 // @namespace   tybug
 // ==/UserScript==
@@ -22,6 +22,9 @@ const FULLURLS = [
   "&_openSectionsOnly=on&creditCompare=%3E%3D&credits=0.0&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on",
   "&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on"
 ];
+// List of gened codes for CORE and Gen-Ed
+const CORECODES = ["D", "CS", "HA", "HL", "HO", "IE", "LL", "PL", "LS", "MS", "PS", "SB", "SH"];
+const GENEDCODES = ["FSAW", "FSAR", "FSMA", "FSOC", "FSPW", "DSHS", "DSHU", "DSNS", "DSNL", "DSSP", "DVCC", "DVUP", "SCIS"];
 // This is basically just for pattern matching partial courses/departments
 const CDPATTERN = /^([a-zA-Z]{4})([0-9]{1,3}|(?:[0-9]{3}[a-zA-Z]?))?$/g;
 const COURSEPATTERN = /((?!Fall)[a-zA-Z]{4}[0-9]{3}[a-zA-Z]?)/g;
@@ -47,6 +50,7 @@ function postDOMMain() {
   });
   createShareLinks();
   linkifyCourses();
+  linkifyGeneds();
   createSectionObserver();
 }
 
@@ -70,6 +74,8 @@ function getTermId(url) {
     return url.split("termId=")[1].split("&")[0];
   } else if (url.includes("/gen-ed/")) { // the geneds page has the term id after the /gen-ed/ address portion, similar to how individual courses or depts do it
     return url.split("/gen-ed/")[1].split("/")[0];
+  } else if (url.includes("/core/")) { // same with the /core/ page
+    return url.split("/core/")[1].split("/")[0];
   } else { // if it's another shortlink
     return url.split("/soc/")[1].split("/")[0];
   }
@@ -97,6 +103,11 @@ function diffTerm(term = getTermId(window.location.href), diff = 0) {
 
 function diffTermURL(url, diff) {
   return url.replace(getTermId(url), diffTerm(getTermId(url), diff));
+}
+
+// Generates a direct link to a term's page for a given gened
+function getGenedLink(code, termId = getTermId(window.location.href), iscore = false) {
+  return "https://app.testudo.umd.edu/soc/" + (!iscore ? "gen-ed" : "core") + "/" + termId + "/" + code;
 }
 
 // ---------- Normal Methods ---------- //
@@ -154,7 +165,7 @@ function generateButtons() {
   });
   reloadRatingsBtn.textContent = 'Reload Ratings';
   document.querySelector('#content-wrapper > div').insertBefore(reloadRatingsBtn, document.querySelector('#courses-page'));
-  
+
   // add last and next semester buttons
   lastSemBtn.style.cssText = "margin-left: 20px;";
   lastSemBtn.addEventListener("click", function() {
@@ -254,6 +265,43 @@ function linkifyCourses() {
   [...allInnerCTs, ...allDescs, ...allIDs].forEach((toLinkify) => {
     toLinkify.innerHTML = toLinkify.innerHTML.replaceAll(COURSEPATTERN,
       match => `<a class="linkified-course" href=${genShareLink(match)}>${match}</a>`);
+  });
+}
+
+// Replaces fake links in course elements to gened types with real links
+function linkifyGeneds() {
+  // Get all courses
+  const allCourses = [...document.querySelectorAll("div.course")];
+  const term = getTermId(window.location.href);
+
+  // For each course, update any links in their core and in their gen-ed sections
+  allCourses.forEach((courseDiv) => {
+    const coreGroup = courseDiv.querySelector("div.core-codes-group");
+    if (coreGroup != null) {
+      // Get links, and for each one update their href
+      const links = [...coreGroup.getElementsByTagName("a")];
+      links.forEach((link) => {
+        let content = link.textContent;
+        if (CORECODES.includes(content)) {
+          link.setAttribute("href", getGenedLink(content, term, true));
+          link.setAttribute("target", "_blank");
+          link.replaceWith(link.cloneNode(true));
+        }
+      });
+    }
+    const genedGroup = courseDiv.querySelector("div.gen-ed-codes-group");
+    if (genedGroup != null) {
+      // Get links, and for each one update their href
+      const links = [...genedGroup.getElementsByTagName("a")];
+      links.forEach((link) => {
+        let content = link.textContent;
+        if (GENEDCODES.includes(content)) {
+          link.setAttribute("href", getGenedLink(content, term, false));
+          link.setAttribute("target", "_blank");
+          link.replaceWith(link.cloneNode(true));
+        }
+      });
+    }
   });
 }
 
