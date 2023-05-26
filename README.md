@@ -14,9 +14,7 @@
 1. Install [TamperMonkey](https://tampermonkey.net/)
 2. Then [click here](https://github.com/tybug/testudoplus/raw/master/testudoplus.user.js) to install the script
 
-Make sure to allow any outgoing traffic made by this plugin.
-
-Make sure to also check back periodically for plugin updates. To update, click the same link you would to install.
+Make sure to check back periodically for plugin updates. To update, click the same link you would to install.
 
 ## Contributing
 
