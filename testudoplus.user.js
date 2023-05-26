@@ -4,13 +4,18 @@
 // @license     GPL3
 // @encoding    utf-8
 // @date        04/12/2019
-// @modified    02/27/2023
-// @include     https://app.testudo.umd.edu/soc/*
-// @grant       GM_xmlhttpRequest
+// @modified    05/26/2023
+// @match       *://app.testudo.umd.edu/soc/*
+// @grant       GM_addStyle
+// @grant       GM_setClipboard
+// @grant       GM_getResourceURL
 // @run-at      document-start
-// @version     0.1.13
+// @resource    aliases https://raw.githubusercontent.com/tybug/testudoplus/master/alias.json
+// @resource    css https://raw.githubusercontent.com/tybug/testudoplus/master/style.css
+// @version     0.1.14
 // @description Improve the Testudo Schedule of Classes
 // @namespace   tybug
+// @source      https://github.com/tybug/testudoplus
 // ==/UserScript==
 
 const DATA = {
@@ -119,7 +124,7 @@ function shortenLongURL() {
   FULLURLS.forEach((ending) => {
     if (currURL.includes(ending)) matchesFull = true;
   });
-  // Matches one of any of an arbitrary number of 'full url's (since different pages have default searches
+  // Matches one of any of an arbitrary number of 'full url's (since different pages have default searches)
   const params = new URLSearchParams(window.location.search);
   if (matchesFull && params.has("courseId")) {
     console.log(params.get("courseId"));
@@ -215,11 +220,7 @@ function createShareLinks() {
   // Local function to handle the copy link action
   function copyLink(courseId) {
     const link = genShareLink(courseId);
-    if (Clipboard && navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(link);
-    } else {
-      alert("Error - Your browser does not support pages editing your clipboard!\nPlease copy this direct link:\n" + link);
-    }
+    GM_setClipboard(link, "text");
   };
 
   courseElements.forEach((courseElem) => {
@@ -321,22 +322,15 @@ function createSectionObserver() {
   obs.observe(coursesDiv, { childList: true, subtree: true });
 }
 
-// ---------- API Accessing ---------- //
+// ---------- API Stuff ---------- //
 
-function loadAliasTable() {
-  return new Promise((resolve) => {
-    const url = 'https://raw.githubusercontent.com/tybug/testudoplus/master/alias.json';
-    GM_xmlhttpRequest({
-      method: 'GET',
-      url,
-      onload: (data) => {
-        if (data.status == 200) {
-          ALIAS = JSON.parse(data.responseText);
-        }
-        resolve();
-      }
-    });
+// Pulls the most recent alias table from the github repo
+async function loadAliasTable() {
+  const response = await fetch(GM_getResourceURL("aliases"), {
+    method: "GET"
   });
+  if (response.status != 200) throw new Error("ERROR: aliases table request failed.");
+  ALIAS = await response.json();
 }
 
 function getInstructorName(elem) {
@@ -349,7 +343,7 @@ function getInstructorName(elem) {
 
 function updateInstructorRating() {
   const instructorElements = document.querySelectorAll('.section-instructor');
-  Array.prototype.map.call(instructorElements, (elem) => {
+  instructorElements.forEach(elem => {
     const instructorName = getInstructorName(elem);
     if (DATA.rmp[instructorName]) {
       const oldElem = elem.querySelector('.rmp.rating-box');
@@ -375,44 +369,32 @@ function updateInstructorRating() {
   updatePTData();
 }
 
-function getInstructor(name) {
-  return new Promise((resolve, reject) => {
-    if (ALIAS[name]) {
-      name = ALIAS[name].rmp_name;
-    }
-    const url = `https://search-production.ratemyprofessors.com/solr/rmp/select?q=${encodeURIComponent(name)}&defType=edismax&qf=teacherfullname_t%5E1000%20autosuggest&bf=pow%28total_number_of_ratings_i%2C2.1%29&siteName=rmp&rows=20&start=0&fl=pk_id%20teacherfirstname_t%20teacherlastname_t%20total_number_of_ratings_i%20schoolname_s%20averageratingscore_rf%20averageclarityscore_rf%20averagehelpfulscore_rf%20averageeasyscore_rf%20chili_i%20schoolid_s%20teacherdepartment_s&fq=schoolid_s%3A1270&wt=json`;
-    GM_xmlhttpRequest({
-      method: 'GET',
-      url,
-      onload: (data) => {
-        if (data.status == 200) {
-          const res = JSON.parse(data.responseText);
+// Attempt to pull RMP rating for a given professor, substituting their alias if needed
+async function getInstructor(name) {
+  if (ALIAS[name]) {
+    name = ALIAS[name].rmp_name;
+  }
+  const response = await fetch(`https://search-production.ratemyprofessors.com/solr/rmp/select?q=${encodeURIComponent(name)}&defType=edismax&qf=teacherfullname_t%5E1000%20autosuggest&bf=pow%28total_number_of_ratings_i%2C2.1%29&siteName=rmp&rows=20&start=0&fl=pk_id%20teacherfirstname_t%20teacherlastname_t%20total_number_of_ratings_i%20schoolname_s%20averageratingscore_rf%20averageclarityscore_rf%20averagehelpfulscore_rf%20averageeasyscore_rf%20chili_i%20schoolid_s%20teacherdepartment_s&fq=schoolid_s%3A1270&wt=json`, {
+    method: "GET"
+  });
+  if (response.status != 200) throw new Error("ERROR: professor request for " + name + " failed.");
 
-          var instructors = res.response.docs;
-          var instructor_match = null;
-          if (instructors) {
-            instructors.forEach(function(instructor) {
-              // if any of the returned profs match our name exactly, use that
-              if (`${instructor.teacherfirstname_t} ${instructor.teacherlastname_t}` == name) {
-                instructor_match = instructor;
-              }
-            });
-            // otherwise, just take the first one
-            if (instructor_match == null) {
-              instructor_match = instructors[0];
-            }
-            return resolve(instructor_match);
-          }
-        }
-        reject();
+  const instructors = await response.json().response.docs;
+  if (instructors) {
+    instructors.forEach(instructor => {
+      // if any of the returned profs match our name exactly, use that
+      if (`${instructor.teacherfirstname_t} ${instructor.teacherlastname_t}` == name) {
+        return instructor;
       }
     });
-  });
+    // otherwise, just take the first one
+    return instructors[0];
+  } else throw new Error("ERROR: no professors found for " + name);
 }
 
 function loadRateData() {
-const instructorElements = document.querySelectorAll('.section-instructor');
-  Array.prototype.map.call(instructorElements, (elem) => {
+  const instructorElements = document.querySelectorAll('.section-instructor');
+  instructorElements.forEach(elem => {
     const instructorName = getInstructorName(elem);
     if (!DATA.rmp[instructorName]) {
       DATA.rmp[instructorName] = {
@@ -430,6 +412,18 @@ const instructorElements = document.querySelectorAll('.section-instructor');
   });
 }
 
+async function planetterpAPI(endpoint, parameters) {
+  const params = new URLSearchParams(parameters).toString();
+  const response = await fetch(`https://planetterp.com/api/v1/${endpoint}?${params}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json"
+    }
+  });
+  if (response.status != 200) throw new Error("ERROR: " + endpoint + " request failed. Parameters: " + JSON.stringify(parameters));
+  return response.json();
+}
+
 async function getPTCourseData(courseId) {
   var courseSchema;
   try {
@@ -443,21 +437,6 @@ async function getPTCourseData(courseId) {
       instructors: {},
       avgGPA: courseSchema.average_gpa
   };
-
-async function planetterpAPI(endpoint, parameters) {
-  const params = new URLSearchParams(parameters).toString()
-  const response = await fetch(`https://planetterp.com/api/v1/${endpoint}?${params}`, {
-    method: "GET",
-    headers: {
-      Accept: "application/json"
-    }
-  });
-  if (response.status != 200) throw new Error("ERROR: " + endpoint + " request failed. Parameters: " + JSON.stringify(parameters));
-  return response.json();
-}
-
-  // TODO lump this and the next set of promises together so they can all happen asyncly, we don't care
-  // what order they happen in, just that they all finish before this function returns
 
   await Promise.all(courseSchema.professors.map(async (professor) => {
     var profSchema;
@@ -478,7 +457,7 @@ async function planetterpAPI(endpoint, parameters) {
 
 function updatePTData() {
   const allCourseElem = document.querySelectorAll('#courses-page .course');
-  Array.prototype.map.call(allCourseElem, (courseElem) => {
+  allCourseElem.forEach(courseElem => {
     const courseIdElem = courseElem.querySelector('.course-id');
     const courseId = courseIdElem.innerText;
     const courseIdContainer = courseIdElem.parentNode;
@@ -508,8 +487,7 @@ function updatePTData() {
     }
 
     const instructorElemList = courseElem.querySelectorAll('.section-instructor');
-
-    Array.prototype.map.call(instructorElemList, (elem) => {
+    instructorElemList.forEach(elem => {
       const instructorName = getInstructorName(elem);
       if (DATA?.pt?.[courseId]?.instructors?.[instructorName]) {
         const oldElem = elem.querySelector('.pt.rating-box');
@@ -568,86 +546,8 @@ async function loadPTData() {
 
 // Adds custom styles to the document
 function injectStyle() {
-  const styleInject = `
-  .rating-box {
-    border-radius: 5px;
-    padding: 1px 5px;
-    margin-left: 10px;
-    color: #FFFFFF !important;
-    font-family: monospace;
-  }
-  .no-underline:hover {
-    text-decoration: none;
-  }
-  .gpa-box {
-    display: flex;
-    justify-content: center;
-    text-align: center;
-    margin-top: 10px;
-    border-radius: 5px;
-    color: #FFFFFF !important;
-    font-family: monospace;
-    padding: 1px;
-  }
-  .rmp {
-    background-color: #FF0266;
-  }
-  .pt {
-    background-color: #009688
-  }
-  .share-course-div {
-    display: flex;
-    justify-content: center;
-    border-radius: 5px;
-    padding: 1px;
-    margin-top: 10px;
-    background-color: #8E1515;
-    color: #FFFFFF !important;
-    font-family: monospace;
-    cursor: pointer;
-  }
-  .share-course-div:active {
-    transform: scale(0.93);
-  }
-  .share-course-link:hover,
-  .share-course-link:active {
-    text-decoration: none;
-  }
-  .linkified-course:hover {
-    text-decoration: underline;
-  }
-  /* fancy tooltip stolen from https://stackoverflow.com/a/25813336, god bless him */
-  [data-tooltip]:before {
-    /* needed - do not touch */
-    content: attr(data-tooltip);
-    position: absolute;
-    opacity: 0;
-
-    /* customizable */
-    padding: 5px;
-    color: white;
-    border-radius: 5px;
-    width: 110px;
-    z-index: 10;
-  }
-  [data-tooltip]:hover:before {
-    /* needed - do not touch */
-    opacity: 1;
-
-    /* customizable */
-    background: rgba(0, 0, 0, 0.75);
-    margin-top: -40px;
-    margin-left: 10px;
-  }
-  [data-tooltip]:not([data-tooltip-persistent]):before {
-    pointer-events: none;
-  }
-  `;
-  const styleInjectElem = document.createElement('style');
-  styleInjectElem.id = 'testudoplus-style-inject';
-  styleInjectElem.innerHTML = styleInject;
-  document.head.appendChild(styleInjectElem);
+  GM_addStyle(GM.getResourceText("css"));
 }
 
 preDOMMain();
-window.onload = postDOMMain
+(window.addEventListener ? window.addEventListener("load", postDOMMain, false) : window.attachEvent && window.attachEvent("onload", postDOMMain));

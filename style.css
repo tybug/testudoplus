@@ -1,0 +1,84 @@
+.rating-box {
+  border-radius: 5px;
+  padding: 1px 5px;
+  margin-left: 10px;
+  color: #FFFFFF !important;
+  font-family: monospace;
+}
+
+.no-underline:hover {
+  text-decoration: none;
+}
+
+.gpa-box {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  margin-top: 10px;
+  border-radius: 5px;
+  color: #FFFFFF !important;
+  font-family: monospace;
+  padding: 1px;
+}
+
+.rmp {
+  background-color: #FF0266;
+}
+
+.pt {
+  background-color: #009688
+}
+
+.share-course-div {
+  display: flex;
+  justify-content: center;
+  border-radius: 5px;
+  padding: 1px;
+  margin-top: 10px;
+  background-color: #8E1515;
+  color: #FFFFFF !important;
+  font-family: monospace;
+  cursor: pointer;
+}
+
+.share-course-div:active {
+  transform: scale(0.93);
+}
+
+.share-course-link:hover,
+.share-course-link:active {
+  text-decoration: none;
+}
+
+.linkified-course:hover {
+  text-decoration: underline;
+}
+
+/* fancy tooltip stolen from https://stackoverflow.com/a/25813336, god bless him */
+[data-tooltip]:before {
+  /* needed - do not touch */
+  content: attr(data-tooltip);
+  position: absolute;
+  opacity: 0;
+
+  /* customizable */
+  padding: 5px;
+  color: white;
+  border-radius: 5px;
+  width: 110px;
+  z-index: 10;
+}
+
+[data-tooltip]:hover:before {
+  /* needed - do not touch */
+  opacity: 1;
+
+  /* customizable */
+  background: rgba(0, 0, 0, 0.75);
+  margin-top: -40px;
+  margin-left: 10px;
+}
+
+[data-tooltip]:not([data-tooltip-persistent]):before {
+  pointer-events: none;
+}
