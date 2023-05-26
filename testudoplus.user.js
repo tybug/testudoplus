@@ -9,6 +9,7 @@
 // @grant       GM_addStyle
 // @grant       GM_setClipboard
 // @grant       GM_getResourceURL
+// @grant       GM_getResourceText
 // @run-at      document-start
 // @resource    aliases https://raw.githubusercontent.com/tybug/testudoplus/master/alias.json
 // @resource    css https://raw.githubusercontent.com/tybug/testudoplus/master/style.css
@@ -546,7 +547,7 @@ async function loadPTData() {
 
 // Adds custom styles to the document
 function injectStyle() {
-  GM_addStyle(GM.getResourceText("css"));
+  GM_addStyle(GM_getResourceText("css"));
 }
 
 preDOMMain();
