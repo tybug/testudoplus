@@ -2,9 +2,6 @@
 // @name        Testudo+
 // @author      tybug, minermaniac447
 // @license     GPL3
-// @encoding    utf-8
-// @date        04/12/2019
-// @modified    05/26/2023
 // @match       *://app.testudo.umd.edu/soc/*
 // @grant       GM_addStyle
 // @grant       GM_setClipboard
